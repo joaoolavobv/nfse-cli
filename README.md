@@ -6,7 +6,7 @@ Esta ferramenta simplifica a integração com a API Sefin Nacional, permitindo a
 
 ---
 
-## � Guiac Rápido
+## 📖 Guia Rápido
 
 ### 🎯 Início Rápido em 3 Passos
 
