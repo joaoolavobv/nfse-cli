@@ -1,0 +1,47 @@
+{
+  "_comentario": "Arquivo de configuração principal do nfse-cli",
+  "_comentario_uso": "Este arquivo controla o comportamento geral do sistema",
+  
+  "ambiente": "producaorestrita",
+  "_comentario_ambiente": "Ambiente da API: 'producao' ou 'producaorestrita' (homologação)",
+  "_comentario_ambiente_dica": "Use 'producaorestrita' para testes. Mude para 'producao' apenas quando estiver pronto",
+  
+  "dry_run": true,
+  "_comentario_dry_run": "Modo de simulação: true = não envia para API (apenas testa), false = envia de verdade",
+  "_comentario_dry_run_dica": "Mantenha true até ter certeza que tudo está correto",
+  
+  "urls": {
+    "_comentario_urls": "URLs das APIs oficiais do governo (não altere a menos que saiba o que está fazendo)",
+    "producao": "https://adn.nfse.gov.br",
+    "producaorestrita": "https://adn.producaorestrita.nfse.gov.br"
+  },
+  
+  "arquivo_pfx": "cert/certificado.pfx",
+  "_comentario_arquivo_pfx": "Caminho para o arquivo do certificado digital A1 (formato PFX/PKCS#12)",
+  
+  "arquivo_senha_cert": "cert/certificado.secret",
+  "_comentario_arquivo_senha_cert": "Caminho para o arquivo contendo a senha do certificado (texto simples)",
+  
+  "serie": 1,
+  "_comentario_serie": "Série do DPS (normalmente 1). Corresponde à tag XML <serie>",
+  
+  "proximo_numero": 1,
+  "_comentario_proximo_numero": "Próximo número sequencial do DPS. Incrementado automaticamente a cada emissão",
+  "_comentario_proximo_numero_xml": "Corresponde à tag XML <nDPS>",
+  
+  "versao_aplicativo": "nfse-cli-2.0.0",
+  "_comentario_versao_aplicativo": "Versão do aplicativo. Corresponde à tag XML <verAplic>",
+  
+  "defaults": {
+    "_comentario_defaults": "Caminhos padrão para arquivos JSON (evita ter que especificar --prestador, --tomador, --servico toda vez)",
+    
+    "prestador": "prestadores/prestador_12345678000195.json",
+    "_comentario_prestador": "Caminho padrão para o arquivo JSON do prestador",
+    
+    "tomador": "tomadores/tomador_exemplo.json",
+    "_comentario_tomador": "Caminho padrão para o arquivo JSON do tomador",
+    
+    "servicos": "servicos/servico_010101.json",
+    "_comentario_servicos": "Caminho padrão para o arquivo JSON do serviço"
+  }
+}

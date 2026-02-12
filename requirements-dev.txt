@@ -1,0 +1,12 @@
+# Dependências de desenvolvimento para nfse-cli
+
+# Incluir dependências de produção
+-r requirements.txt
+
+# Framework de testes
+pytest>=7.4.0
+pytest-mock>=3.11.0
+pytest-cov>=4.1.0
+
+# Property-based testing
+hypothesis>=6.82.0

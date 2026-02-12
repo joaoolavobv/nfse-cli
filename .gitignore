@@ -1,0 +1,46 @@
+# --- Senhas e Certificados Digitais (NÃO ENVIAR) ---
+# Arquivos .pfx ou .p12 contêm a chave privada da empresa
+cert/*
+*.pfx
+*.p12
+*.pem
+*.key
+*.secret
+secret
+
+# --- Logs, Arquivos de Configuração Sensíveis e Arquivos Locais ---
+# Ignorar XMLs e PDFs gerados
+dps/*.xml
+nfse/*.xml
+danfse/*.pdf
+logs/*.json
+
+# Ignorar arquivos de configuração local (mas manter .example)
+config.json
+
+# Ignorar arquivos JSON de dados reais (mas manter .example)
+prestadores/*.json
+!prestadores/*.example
+!prestadores/README.md
+tomadores/*.json
+!tomadores/*.example
+!tomadores/README.md
+servicos/*.json
+!servicos/*.example
+!servicos/README.md
+
+# Ignorar documentação e schemas (muito grandes)
+nfse_docs/
+swagger/
+xsd/
+
+# --- Arquivos do Sistema ---
+.DS_Store
+Thumbs.db
+
+# --- Ambiente Python ---
+__pycache__/
+*.py[cod]
+.venv/
+env/
+venv/

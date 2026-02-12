@@ -1,0 +1,13 @@
+{
+  "CNPJ": "98765432000100",
+  "CPF": null,
+  "xNome": "CLIENTE TESTE LTDA",
+  "email": "cliente@teste.com",
+  "end": {
+    "xLgr": "Avenida Paulista",
+    "nro": "1000",
+    "xBairro": "Bela Vista",
+    "cMun": "3550308",
+    "CEP": "01310100"
+  }
+}

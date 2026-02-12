@@ -1,0 +1,41 @@
+{
+  "_comentario": "Arquivo de exemplo para SERVIÇO com informações de IBS/CBS",
+  "_comentario_uso": "Use este exemplo se você é não optante do Simples Nacional ou após 01/01/2027",
+  
+  "xDescServ": "SERVICOS DE CONSULTORIA EM TECNOLOGIA DA INFORMACAO",
+  "_comentario_xDescServ": "Tag XML: <xDescServ> - Descrição completa do serviço prestado",
+  
+  "cTribNac": "010101",
+  "_comentario_cTribNac": "Tag XML: <cTribNac> - Código de Tributação Nacional (6 dígitos numéricos)",
+  
+  "cLocPrestacao": "3550308",
+  "_comentario_cLocPrestacao": "Tag XML: <cLocPrestacao> - Código do município IBGE onde o serviço foi prestado",
+  
+  "cTribMun": "001",
+  "_comentario_cTribMun": "Tag XML: <cTribMun> - Código de Tributação Municipal (opcional)",
+  
+  "cNBS": null,
+  "_comentario_cNBS": "Tag XML: <cNBS> - Código NBS (opcional)",
+  
+  "cIntContrib": null,
+  "_comentario_cIntContrib": "Tag XML: <cIntContrib> - Código interno do contribuinte (opcional)",
+  
+  "aliquota": 5.0,
+  "_comentario_aliquota": "Alíquota do ISSQN em percentual (ex: 5.0 para 5%)",
+  
+  "ibscbs": {
+    "_comentario_ibscbs": "Tag XML: <IBSCBS> dentro de <valores> - Informações de IBS e CBS",
+    
+    "vIBS": 10.00,
+    "_comentario_vIBS": "Tag XML: <vIBS> - Valor do IBS (Imposto sobre Bens e Serviços)",
+    
+    "vCBS": 5.00,
+    "_comentario_vCBS": "Tag XML: <vCBS> - Valor da CBS (Contribuição sobre Bens e Serviços)",
+    
+    "aliqIBS": 1.0,
+    "_comentario_aliqIBS": "Tag XML: <aliqIBS> - Alíquota do IBS em percentual (opcional)",
+    
+    "aliqCBS": 0.5,
+    "_comentario_aliqCBS": "Tag XML: <aliqCBS> - Alíquota da CBS em percentual (opcional)"
+  }
+}

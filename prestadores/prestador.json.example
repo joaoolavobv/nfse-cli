@@ -1,0 +1,35 @@
+{
+  "_comentario": "Arquivo de exemplo para dados do PRESTADOR de serviços",
+  "_comentario_estrutura": "As chaves deste arquivo correspondem diretamente às tags XML do DPS",
+  
+  "CNPJ": "12345678000190",
+  "_comentario_CNPJ": "Tag XML: <CNPJ> - CNPJ do prestador (14 dígitos). Use CNPJ OU CPF, não ambos",
+  
+  "CPF": null,
+  "_comentario_CPF": "Tag XML: <CPF> - CPF do prestador (11 dígitos). Use CPF OU CNPJ, não ambos",
+  
+  "xNome": "EMPRESA EXEMPLO LTDA",
+  "_comentario_xNome": "Tag XML: <xNome> - Nome ou razão social do prestador",
+  
+  "cMun": "3550308",
+  "_comentario_cMun": "Tag XML: <cMun> - Código do município IBGE do prestador (7 dígitos)",
+  
+  "IM": "12345678",
+  "_comentario_IM": "Tag XML: <IM> - Inscrição Municipal do prestador (opcional)",
+  
+  "email": "contato@empresa.com.br",
+  "_comentario_email": "Tag XML: <email> - Email do prestador (opcional)",
+  
+  "regTrib": {
+    "_comentario_regTrib": "Tag XML: <regTrib> - Regime tributário do prestador (OBRIGATÓRIO)",
+    
+    "opSimpNac": 1,
+    "_comentario_opSimpNac": "Tag XML: <opSimpNac> - Opção pelo Simples Nacional: 1=Não Optante, 2=MEI, 3=ME/EPP",
+    
+    "regEspTrib": 0,
+    "_comentario_regEspTrib": "Tag XML: <regEspTrib> - Regime Especial de Tributação: 0=Nenhum, 1-6 ou 9=Outros",
+    
+    "regApTribSN": null,
+    "_comentario_regApTribSN": "Tag XML: <regApTribSN> - Regime de Apuração (1, 2 ou 3). Apenas se opSimpNac=3"
+  }
+}

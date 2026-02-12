@@ -1,0 +1,35 @@
+{
+  "_comentario": "Arquivo de exemplo para dados do TOMADOR de serviços (cliente)",
+  "_comentario_estrutura": "As chaves deste arquivo correspondem diretamente às tags XML do DPS",
+  
+  "CNPJ": "98765432000100",
+  "_comentario_CNPJ": "Tag XML: <CNPJ> - CNPJ do tomador (14 dígitos). Use CNPJ OU CPF, não ambos",
+  
+  "CPF": null,
+  "_comentario_CPF": "Tag XML: <CPF> - CPF do tomador (11 dígitos). Use CPF OU CNPJ, não ambos",
+  
+  "xNome": "CLIENTE EXEMPLO LTDA",
+  "_comentario_xNome": "Tag XML: <xNome> - Nome ou razão social do tomador",
+  
+  "email": "financeiro@cliente.com.br",
+  "_comentario_email": "Tag XML: <email> - Email do tomador (opcional)",
+  
+  "end": {
+    "_comentario_end": "Tag XML: <end> - Endereço do tomador (opcional, mas recomendado)",
+    
+    "xLgr": "Avenida Paulista",
+    "_comentario_xLgr": "Tag XML: <xLgr> - Logradouro (rua, avenida, etc.)",
+    
+    "nro": "1000",
+    "_comentario_nro": "Tag XML: <nro> - Número do endereço",
+    
+    "xBairro": "Bela Vista",
+    "_comentario_xBairro": "Tag XML: <xBairro> - Bairro",
+    
+    "cMun": "3550308",
+    "_comentario_cMun": "Tag XML: <cMun> dentro de <endNac> - Código do município IBGE (7 dígitos)",
+    
+    "CEP": "01310100",
+    "_comentario_CEP": "Tag XML: <CEP> dentro de <endNac> - CEP sem hífen (8 dígitos)"
+  }
+}

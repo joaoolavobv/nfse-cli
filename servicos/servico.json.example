@@ -1,0 +1,32 @@
+{
+  "_comentario": "Arquivo de exemplo para dados do SERVIÇO prestado",
+  "_comentario_estrutura": "As chaves deste arquivo correspondem diretamente às tags XML do DPS",
+  "_comentario_importante": "NÃO inclua 'vServ' (valor) ou 'dhEmi' (data) aqui - estes são fornecidos via linha de comando",
+  
+  "xDescServ": "SERVICOS DE CONSULTORIA EM TECNOLOGIA DA INFORMACAO",
+  "_comentario_xDescServ": "Tag XML: <xDescServ> - Descrição completa do serviço prestado",
+  
+  "cTribNac": "010101",
+  "_comentario_cTribNac": "Tag XML: <cTribNac> - Código de Tributação Nacional (6 dígitos numéricos, sem pontos)",
+  
+  "cLocPrestacao": "3550308",
+  "_comentario_cLocPrestacao": "Tag XML: <cLocPrestacao> - Código do município IBGE onde o serviço foi prestado (7 dígitos)",
+  
+  "cTribMun": "001",
+  "_comentario_cTribMun": "Tag XML: <cTribMun> - Código de Tributação Municipal (3 dígitos, opcional)",
+  
+  "cNBS": null,
+  "_comentario_cNBS": "Tag XML: <cNBS> - Código NBS (Nomenclatura Brasileira de Serviços, opcional)",
+  
+  "cIntContrib": null,
+  "_comentario_cIntContrib": "Tag XML: <cIntContrib> - Código interno do contribuinte (opcional)",
+  
+  "aliquota": null,
+  "_comentario_aliquota": "Alíquota do ISSQN em percentual (ex: 5.0 para 5%). Opcional. Será validada se fornecida",
+  "_comentario_aliquota_regras": "Máximo: 5%. Mínimo: 2% (com exceções para códigos específicos)",
+  
+  "ibscbs": null,
+  "_comentario_ibscbs": "Tag XML: <IBSCBS> - Informações de IBS/CBS (opcional até 2027 para Simples Nacional)",
+  "_comentario_ibscbs_obrigatoriedade": "Obrigatório para não optantes do Simples Nacional. Obrigatório para todos a partir de 01/01/2027",
+  "_comentario_ibscbs_exemplo": "Para incluir IBSCBS, substitua null por: {\"vIBS\": 10.00, \"vCBS\": 5.00, \"aliqIBS\": 1.0, \"aliqCBS\": 0.5}"
+}
