@@ -17,6 +17,35 @@ VERBOSE = False
 SILENT = False
 
 
+def converter_valor_monetario(valor_str: str) -> float:
+    """
+    Converte string de valor monetário para float.
+    
+    Aceita tanto vírgula quanto ponto como separador decimal.
+    Exemplos:
+        "1500,00" -> 1500.0
+        "1500.00" -> 1500.0
+        "1500" -> 1500.0
+    
+    Args:
+        valor_str: String contendo o valor monetário
+        
+    Returns:
+        float: Valor convertido
+        
+    Raises:
+        argparse.ArgumentTypeError: Se o valor não puder ser convertido
+    """
+    try:
+        # Substituir vírgula por ponto
+        valor_normalizado = str(valor_str).replace(',', '.')
+        return float(valor_normalizado)
+    except (ValueError, AttributeError) as e:
+        raise argparse.ArgumentTypeError(
+            f"Valor inválido: '{valor_str}'. Use formato numérico (ex: 1500.00 ou 1500,00)"
+        ) from e
+
+
 class ArgumentParserPtBr(argparse.ArgumentParser):
     """
     ArgumentParser customizado com mensagens em português.
@@ -95,8 +124,8 @@ def criar_parser() -> ArgumentParserPtBr:
         epilog="""
 Exemplos de uso:
   nfse init                                      # Inicializar estrutura
-  nfse emitir --valor 1500.00 --data 2024-01-15  # Emitir nota
-  nfse emitir --valor 1500.00 --data 15/01/2024 --dry-run  # Simular emissão
+  nfse emitir --valor 1500.00 --data 2024-01-15  # Emitir nota (ponto)
+  nfse emitir --valor 1500,00 --data 15/01/2024 --dry-run  # Simular emissão (vírgula)
   nfse danfse <chave_acesso>                     # Baixar DANFSe
   nfse importar <chave_acesso>                   # Importar dados de NFS-e
 
@@ -211,9 +240,9 @@ Em modo dry-run, todas as etapas são executadas exceto o envio real para a API.
     # Parâmetros obrigatórios
     parser_emitir.add_argument(
         '--valor',
-        type=float,
+        type=converter_valor_monetario,
         required=True,
-        help='Valor monetário do serviço (obrigatório). Exemplo: 1500.00'
+        help='Valor monetário do serviço (obrigatório). Aceita vírgula ou ponto como separador decimal. Exemplos: 1500.00 ou 1500,00'
     )
     
     parser_emitir.add_argument(

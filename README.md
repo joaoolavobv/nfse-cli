@@ -436,7 +436,7 @@ Este comando irá:
 Emite uma NFS-e com os dados fornecidos.
 
 **Parâmetros obrigatórios:**
-- `--valor`: Valor monetário do serviço (ex: 1500.00)
+- `--valor`: Valor monetário do serviço. Aceita vírgula ou ponto como separador decimal (ex: 1500.00 ou 1500,00)
 - `--data`: Data/hora de emissão no formato ISO 8601 (ex: 2026-03-15T14:30:00-03:00)
 
 **Parâmetros opcionais:**
@@ -451,8 +451,11 @@ Emite uma NFS-e com os dados fornecidos.
 **Exemplos:**
 
 ```bash
-# Emitir nota (parâmetros obrigatórios)
+# Emitir nota (parâmetros obrigatórios com ponto)
 python nfse.py emitir --valor 1500.00 --data 2026-03-15T14:30:00-03:00
+
+# Emitir nota (usando vírgula como separador decimal)
+python nfse.py emitir --valor 1500,00 --data 2026-03-15T14:30:00-03:00
 
 # Emitir em modo dry-run (simulação)
 python nfse.py emitir --valor 1500.00 --data 2026-03-15T14:30:00-03:00 --dry-run

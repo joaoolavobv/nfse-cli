@@ -12,7 +12,45 @@ from argparse import Namespace
 # Adicionar diretório raiz ao path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from nfse_core.cli import executar_emitir, VERBOSE, SILENT
+from nfse_core.cli import executar_emitir, converter_valor_monetario, VERBOSE, SILENT
+
+
+class TestConverterValorMonetario:
+    """Testes para a função converter_valor_monetario"""
+    
+    def test_converte_valor_com_ponto(self):
+        """Testa conversão de valor com ponto como separador decimal"""
+        assert converter_valor_monetario("1500.00") == 1500.0
+        assert converter_valor_monetario("1500.50") == 1500.5
+        assert converter_valor_monetario("0.99") == 0.99
+    
+    def test_converte_valor_com_virgula(self):
+        """Testa conversão de valor com vírgula como separador decimal"""
+        assert converter_valor_monetario("1500,00") == 1500.0
+        assert converter_valor_monetario("1500,50") == 1500.5
+        assert converter_valor_monetario("0,99") == 0.99
+    
+    def test_converte_valor_inteiro(self):
+        """Testa conversão de valor inteiro sem separador decimal"""
+        assert converter_valor_monetario("1500") == 1500.0
+        assert converter_valor_monetario("100") == 100.0
+    
+    def test_converte_valor_com_float_direto(self):
+        """Testa conversão quando já é um float"""
+        assert converter_valor_monetario(1500.0) == 1500.0
+        assert converter_valor_monetario(1500.50) == 1500.5
+    
+    def test_rejeita_valor_invalido(self):
+        """Testa que valores inválidos geram erro apropriado"""
+        import argparse
+        
+        with pytest.raises(argparse.ArgumentTypeError) as exc_info:
+            converter_valor_monetario("abc")
+        assert "Valor inválido" in str(exc_info.value)
+        
+        with pytest.raises(argparse.ArgumentTypeError) as exc_info:
+            converter_valor_monetario("1500.00.00")
+        assert "Valor inválido" in str(exc_info.value)
 
 
 class TestExecutarEmitir:
