@@ -12,6 +12,12 @@ Este diretório contém os arquivos JSON com dados dos **prestadores de serviço
    ```bash
    copy prestador.json.example prestador_SEUCNPJ.json
    ```
+   
+   **Ou use o comando init interativo:**
+   ```bash
+   python nfse.py init
+   ```
+   O comando `init` coleta os dados do prestador interativamente e cria o arquivo automaticamente.
 
 2. **Edite com seus dados:**
    - Substitua o CNPJ/CPF pelo seu documento
@@ -86,3 +92,6 @@ Gera o XML:
 - Use nomes descritivos: `prestador_12345678000190.json`
 - Remova as chaves `_comentario*` se quiser arquivos mais limpos
 - Valide o CNPJ antes de usar (o sistema valida o dígito verificador)
+- Use `python nfse.py init` para criar o arquivo interativamente com validações
+- O arquivo `.example` contém explicações detalhadas de TODOS os campos disponíveis
+- Campos opcionais como endereço completo, telefone e email podem ser adicionados consultando o `.example`

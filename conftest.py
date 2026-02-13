@@ -37,8 +37,8 @@ def config_exemplo() -> Dict:
             "producao": "https://adn.nfse.gov.br",
             "producaorestrita": "https://adn.producaorestrita.nfse.gov.br"
         },
-        "arquivo_pfx": "cert/certificado.pfx",
-        "arquivo_senha_cert": "cert/certificado.secret",
+        "arquivo_cert_pfx": "cert/certificado.pfx",
+        "arquivo_cert_senha": "cert/certificado.secret",
         "serie": 1,
         "proximo_numero": 1,
         "versao_aplicativo": "nfse-cli-2.0.0",

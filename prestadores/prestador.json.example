@@ -1,35 +1,96 @@
 {
   "_comentario": "Arquivo de exemplo para dados do PRESTADOR de serviços",
-  "_comentario_estrutura": "As chaves deste arquivo correspondem diretamente às tags XML do DPS",
+  "_comentario_uso": "Este arquivo define os dados da empresa que está prestando o serviço (você)",
+  "_comentario_estrutura": "As chaves correspondem diretamente às tags XML do DPS",
+  "_comentario_criacao": "Use 'python nfse.py init' para criar este arquivo interativamente",
   
-  "CNPJ": "12345678000190",
-  "_comentario_CNPJ": "Tag XML: <CNPJ> - CNPJ do prestador (14 dígitos). Use CNPJ OU CPF, não ambos",
+  "CNPJ": "12345678000195",
+  "_comentario_CNPJ": "Tag XML: <CNPJ> - CNPJ do prestador (14 dígitos numéricos, sem pontos/traços)",
+  "_comentario_CNPJ_ou_CPF": "Use CNPJ OU CPF, nunca ambos. Para pessoa física, deixe CNPJ como null e preencha CPF",
+  "_comentario_CNPJ_validacao": "O sistema valida o dígito verificador do CNPJ",
   
   "CPF": null,
-  "_comentario_CPF": "Tag XML: <CPF> - CPF do prestador (11 dígitos). Use CPF OU CNPJ, não ambos",
+  "_comentario_CPF": "Tag XML: <CPF> - CPF do prestador (11 dígitos numéricos, sem pontos/traços)",
+  "_comentario_CPF_quando": "Use apenas se for pessoa física (MEI ou autônomo). Deixe null se usar CNPJ",
+  "_comentario_CPF_validacao": "O sistema valida o dígito verificador do CPF",
   
-  "xNome": "EMPRESA EXEMPLO LTDA",
-  "_comentario_xNome": "Tag XML: <xNome> - Nome ou razão social do prestador",
+  "xNome": "EMPRESA EXEMPLO DE SERVICOS LTDA",
+  "_comentario_xNome": "Tag XML: <xNome> - Razão social ou nome completo do prestador",
+  "_comentario_xNome_dica": "Use o nome exatamente como consta no CNPJ/CPF",
+  "_comentario_xNome_tamanho": "Máximo: 150 caracteres",
+  
+  "end": {
+    "_comentario_end": "Tag XML: <end> - Endereço completo do prestador (opcional, mas recomendado)",
+    "_comentario_end_quando": "Alguns municípios podem exigir o endereço completo",
+    
+    "endNac": {
+      "_comentario_endNac": "Tag XML: <endNac> - Endereço nacional (dentro do Brasil)",
+      
+      "xLgr": "Avenida Brigadeiro Faria Lima",
+      "_comentario_xLgr": "Tag XML: <xLgr> - Logradouro (rua, avenida, travessa, etc.)",
+      "_comentario_xLgr_tamanho": "Máximo: 125 caracteres",
+      
+      "nro": "1500",
+      "_comentario_nro": "Tag XML: <nro> - Número do endereço",
+      "_comentario_nro_sem_numero": "Use 'S/N' se não houver número",
+      
+      "xCpl": "Sala 1001",
+      "_comentario_xCpl": "Tag XML: <xCpl> - Complemento (sala, andar, bloco, etc.) - OPCIONAL",
+      "_comentario_xCpl_tamanho": "Máximo: 60 caracteres",
+      
+      "xBairro": "Jardim Paulistano",
+      "_comentario_xBairro": "Tag XML: <xBairro> - Bairro ou distrito",
+      "_comentario_xBairro_tamanho": "Máximo: 60 caracteres",
+      
+      "cMun": "3550308",
+      "_comentario_cMun": "Tag XML: <cMun> - Código do município IBGE (7 dígitos)",
+      "_comentario_cMun_exemplo": "3550308 = São Paulo/SP, 3304557 = Rio de Janeiro/RJ, 5300108 = Brasília/DF",
+      "_comentario_cMun_consulta": "Consulte em: https://www.ibge.gov.br/explica/codigos-dos-municipios.php",
+      
+      "CEP": "01452002",
+      "_comentario_CEP": "Tag XML: <CEP> - CEP sem hífen (8 dígitos numéricos)",
+      "_comentario_CEP_validacao": "O sistema valida o formato do CEP"
+    }
+  },
   
   "cMun": "3550308",
   "_comentario_cMun": "Tag XML: <cMun> - Código do município IBGE do prestador (7 dígitos)",
+  "_comentario_cMun_uso": "Este campo é OBRIGATÓRIO mesmo se você preencher o endereço completo acima",
+  "_comentario_cMun_importante": "Deve ser o município onde a empresa está estabelecida (sede)",
   
-  "IM": "12345678",
+  "IM": "87654321",
   "_comentario_IM": "Tag XML: <IM> - Inscrição Municipal do prestador (opcional)",
+  "_comentario_IM_quando": "Obrigatório se o município exigir. Consulte a prefeitura",
+  "_comentario_IM_formato": "Formato varia por município. Use apenas números",
   
-  "email": "contato@empresa.com.br",
-  "_comentario_email": "Tag XML: <email> - Email do prestador (opcional)",
+  "fone": "11987654321",
+  "_comentario_fone": "Tag XML: <fone> - Telefone de contato (opcional)",
+  "_comentario_fone_formato": "Apenas números, com DDD. Exemplo: 11987654321",
+  "_comentario_fone_tamanho": "Máximo: 20 dígitos",
+  
+  "email": "contato@empresaexemplo.com.br",
+  "_comentario_email": "Tag XML: <email> - Email de contato do prestador (opcional, mas recomendado)",
+  "_comentario_email_uso": "Usado para notificações e comunicações oficiais",
+  "_comentario_email_tamanho": "Máximo: 80 caracteres",
   
   "regTrib": {
     "_comentario_regTrib": "Tag XML: <regTrib> - Regime tributário do prestador (OBRIGATÓRIO)",
+    "_comentario_regTrib_importante": "Defina corretamente conforme o enquadramento da empresa na Receita Federal",
     
-    "opSimpNac": 1,
-    "_comentario_opSimpNac": "Tag XML: <opSimpNac> - Opção pelo Simples Nacional: 1=Não Optante, 2=MEI, 3=ME/EPP",
+    "opSimpNac": 3,
+    "_comentario_opSimpNac": "Tag XML: <opSimpNac> - Opção pelo Simples Nacional (OBRIGATÓRIO)",
+    "_comentario_opSimpNac_opcoes": "1 = Não Optante (Lucro Real/Presumido), 2 = MEI, 3 = ME/EPP Simples Nacional",
+    "_comentario_opSimpNac_dica": "Verifique no Portal do Simples Nacional: https://www8.receita.fazenda.gov.br/simplesnacional/",
     
     "regEspTrib": 0,
-    "_comentario_regEspTrib": "Tag XML: <regEspTrib> - Regime Especial de Tributação: 0=Nenhum, 1-6 ou 9=Outros",
+    "_comentario_regEspTrib": "Tag XML: <regEspTrib> - Regime Especial de Tributação (OBRIGATÓRIO)",
+    "_comentario_regEspTrib_opcoes": "0 = Nenhum, 1 = Microempresa Municipal, 2 = Estimativa, 3 = Sociedade de Profissionais, 4 = Cooperativa, 5 = MEI, 6 = ME/EPP, 9 = Outros",
+    "_comentario_regEspTrib_dica": "Use 0 se não houver regime especial. Consulte a prefeitura em caso de dúvida",
     
-    "regApTribSN": null,
-    "_comentario_regApTribSN": "Tag XML: <regApTribSN> - Regime de Apuração (1, 2 ou 3). Apenas se opSimpNac=3"
+    "regApTribSN": 1,
+    "_comentario_regApTribSN": "Tag XML: <regApTribSN> - Regime de Apuração do Simples Nacional (condicional)",
+    "_comentario_regApTribSN_quando": "OBRIGATÓRIO apenas se opSimpNac = 3 (ME/EPP Simples Nacional). Deixe null caso contrário",
+    "_comentario_regApTribSN_opcoes": "1 = Microempresa Municipal, 2 = Estimativa, 3 = Sociedade de Profissionais",
+    "_comentario_regApTribSN_dica": "Consulte seu contador ou a prefeitura para definir o regime correto"
   }
 }

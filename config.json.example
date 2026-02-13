@@ -1,48 +1,55 @@
 {
-  "_comentario": "Arquivo de configuração principal do nfse-cli",
-  "_comentario_uso": "Este arquivo controla o comportamento geral do sistema",
-  
-  "dry_run": true,
-  "_comentario_dry_run": "Modo de simulação: true = não envia para API (apenas testa), false = envia de verdade",
-  "_comentario_dry_run_dica": "Mantenha true até ter certeza que tudo está correto",
+  "_comentario": "═══════════════════════════════════════════════════════════════════════════════",
+  "_comentario_titulo": "                    ARQUIVO DE CONFIGURAÇÃO DO NFSE-CLI                      ",
+  "_comentario_rodape": "═══════════════════════════════════════════════════════════════════════════════",
   
   "urls": {
-    "_comentario_urls": "URLs das APIs oficiais do governo (não altere a menos que saiba o que está fazendo)",
+    "_comentario": "URLs das APIs oficiais do governo (não altere)",
     "producao": "https://adn.nfse.gov.br",
     "producaorestrita": "https://adn.producaorestrita.nfse.gov.br"
   },
   
-  "arquivo_pfx": "cert/certificado.pfx",
-  "_comentario_arquivo_pfx": "Caminho para o arquivo do certificado digital A1 (formato PFX/PKCS#12)",
+  "arquivo_cert_pfx": "cert/certificado.pfx",
+  "_comentario_arquivo_cert_pfx": "Caminho para o certificado digital A1 (formato PFX/PKCS#12)",
   
-  "arquivo_senha_cert": "cert/certificado.secret",
-  "_comentario_arquivo_senha_cert": "Caminho para o arquivo contendo a senha do certificado (texto simples)",
+  "arquivo_cert_senha": "cert/certificado.secret",
+  "_comentario_arquivo_cert_senha": "Caminho para o arquivo contendo a senha do certificado",
   
   "serie": 1,
-  "_comentario_serie": "Série do DPS (normalmente 1). Corresponde à tag XML <serie>",
+  "_comentario_serie": "Série do DPS (normalmente 1). Tag XML: <serie>",
   
   "proximo_numero": 1,
-  "_comentario_proximo_numero": "Próximo número sequencial do DPS. Incrementado automaticamente a cada emissão",
-  "_comentario_proximo_numero_xml": "Corresponde à tag XML <nDPS>",
+  "_comentario_proximo_numero": "Próximo número sequencial do DPS (auto-incrementado). Tag XML: <nDPS>",
   
-  "versao_aplicativo": "nfse-cli-2.0.0",
-  "_comentario_versao_aplicativo": "Versão do aplicativo. Corresponde à tag XML <verAplic>",
+  "versao_aplicativo": "nfse-cli-0.0.1",
+  "_comentario_versao_aplicativo": "Versão do aplicativo. Tag XML: <verAplic>",
   
   "defaults": {
-    "_comentario_defaults": "Caminhos padrão para arquivos JSON e configurações (evita ter que especificar na linha de comando toda vez)",
+    "_comentario": "Valores padrão que podem ser sobrescritos via linha de comando",
     
     "ambiente": "producaorestrita",
-    "_comentario_ambiente": "Ambiente padrão da API: 'producao' ou 'producaorestrita' (homologação)",
-    "_comentario_ambiente_dica": "Use 'producaorestrita' para testes. Mude para 'producao' apenas quando estiver pronto",
-    "_comentario_ambiente_override": "Pode ser sobrescrito com --ambiente ou --producao na linha de comando",
+    "_comentario_ambiente": "Ambiente da API: 'producao' ou 'producaorestrita'",
+    "_comentario_ambiente_uso": "Use 'producaorestrita' para testes",
+    "_comentario_ambiente_override": "Sobrescrever: --ambiente producao ou --producao",
+    
+    "dry_run": true,
+    "_comentario_dry_run": "Modo simulação: true = não envia para API, false = envia real",
+    "_comentario_dry_run_override": "Sobrescrever: --dry-run (força true) ou --no-dry-run (força false)",
+    
+    "timeout": 30,
+    "_comentario_timeout": "Timeout em segundos para requisições HTTP",
+    "_comentario_timeout_override": "Sobrescrever: --timeout 60 ou -t 60",
     
     "prestador": "prestadores/prestador_12345678000195.json",
-    "_comentario_prestador": "Caminho padrão para o arquivo JSON do prestador",
+    "_comentario_prestador": "Caminho padrão para o arquivo JSON do prestador (sua empresa)",
+    "_comentario_prestador_override": "Sobrescrever: --prestador prestadores/outro.json",
     
     "tomador": "tomadores/tomador_exemplo.json",
-    "_comentario_tomador": "Caminho padrão para o arquivo JSON do tomador",
+    "_comentario_tomador": "Caminho padrão para o arquivo JSON do tomador (cliente)",
+    "_comentario_tomador_override": "Sobrescrever: --tomador tomadores/cliente.json",
     
     "servicos": "servicos/servico_010101.json",
-    "_comentario_servicos": "Caminho padrão para o arquivo JSON do serviço"
+    "_comentario_servicos": "Caminho padrão para o arquivo JSON do serviço",
+    "_comentario_servicos_override": "Sobrescrever: --servico servicos/outro.json"
   }
 }

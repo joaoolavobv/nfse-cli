@@ -19,9 +19,10 @@ class Config:
     Attributes:
         ambiente: Ambiente de execução ('producao' ou 'producaorestrita')
         dry_run: Modo de simulação (não envia para API se True)
+        timeout: Timeout em segundos para requisições HTTP (padrão: 30)
         urls: Dicionário com URLs da API por ambiente
-        arquivo_pfx: Caminho para o arquivo de certificado PFX
-        arquivo_senha_cert: Caminho para o arquivo com a senha do certificado
+        arquivo_cert_pfx: Caminho para o arquivo de certificado PFX
+        arquivo_cert_senha: Caminho para o arquivo com a senha do certificado
         serie: Série do DPS
         proximo_numero: Próximo número de DPS a ser usado
         versao_aplicativo: Versão do aplicativo para incluir no XML
@@ -29,12 +30,13 @@ class Config:
     """
     ambiente: str = "producaorestrita"
     dry_run: bool = True
+    timeout: int = 30
     urls: Dict[str, str] = field(default_factory=lambda: {
         "producao": "https://adn.nfse.gov.br",
         "producaorestrita": "https://adn.producaorestrita.nfse.gov.br"
     })
-    arquivo_pfx: str = "cert/certificado.pfx"
-    arquivo_senha_cert: str = "cert/certificado.secret"
+    arquivo_cert_pfx: str = "cert/certificado.pfx"
+    arquivo_cert_senha: str = "cert/certificado.secret"
     serie: int = 1
     proximo_numero: int = 1
     versao_aplicativo: str = "nfse-cli-2.0.0"
@@ -71,13 +73,14 @@ class Config:
             
             return cls(
                 ambiente=defaults.get('ambiente', 'producaorestrita'),
-                dry_run=dados.get('dry_run', True),
+                dry_run=defaults.get('dry_run', True),
+                timeout=defaults.get('timeout', 30),
                 urls=dados.get('urls', {
                     "producao": "https://adn.nfse.gov.br",
                     "producaorestrita": "https://adn.producaorestrita.nfse.gov.br"
                 }),
-                arquivo_pfx=dados.get('arquivo_pfx', 'cert/certificado.pfx'),
-                arquivo_senha_cert=dados.get('arquivo_senha_cert', 'cert/certificado.secret'),
+                arquivo_cert_pfx=dados.get('arquivo_cert_pfx', 'cert/certificado.pfx'),
+                arquivo_cert_senha=dados.get('arquivo_cert_senha', 'cert/certificado.secret'),
                 serie=dados.get('serie', 1),
                 proximo_numero=dados.get('proximo_numero', 1),
                 versao_aplicativo=dados.get('versao_aplicativo', 'nfse-cli-2.0.0'),

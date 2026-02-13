@@ -14,7 +14,6 @@ import base64
 import gzip
 import io
 import os
-import tempfile
 
 from lxml import etree
 from cryptography import x509
@@ -91,18 +90,24 @@ def carregar_pfx(arquivo_pfx: str, senha: str) -> bytes:
                 "Senha do certificado incorreta ou arquivo PFX inválido"
             ) from e
         
-        # Converter chave privada para PEM
+        # Converter chave privada para PEM (formato PKCS8)
         key_pem = private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption()
         )
         
         # Converter certificado para PEM
         cert_pem = certificate.public_bytes(serialization.Encoding.PEM)
         
-        # Concatenar certificado e chave (formato esperado por signxml)
+        # Concatenar chave e certificado (formato esperado por signxml)
+        # Ordem: chave privada primeiro, depois certificado
         pem_data = key_pem + cert_pem
+        
+        # Se houver certificados adicionais na cadeia, incluir também
+        if additional_certs:
+            for cert in additional_certs:
+                pem_data += cert.public_bytes(serialization.Encoding.PEM)
         
         return pem_data
         
@@ -265,7 +270,7 @@ def assinar_xml(xml: etree.Element, pem_data: bytes) -> etree.Element:
     """
     Assina XML com XMLDSig (enveloped signature).
     
-    Usa o algoritmo rsa-sha1 conforme especificação da NFS-e.
+    Usa o algoritmo rsa-sha256 conforme especificação da NFS-e.
     A assinatura é inserida como elemento filho do elemento raiz (enveloped).
     
     Args:
@@ -279,33 +284,23 @@ def assinar_xml(xml: etree.Element, pem_data: bytes) -> etree.Element:
         CertificateError: Se houver erro ao assinar o XML
     """
     try:
-        # Criar arquivo temporário para o certificado PEM
-        # (signxml requer arquivo, não aceita bytes diretamente)
-        with tempfile.NamedTemporaryFile(mode='wb', suffix='.pem', delete=False) as temp_pem:
-            temp_pem.write(pem_data)
-            temp_pem_path = temp_pem.name
+        # Criar signer com algoritmo rsa-sha256
+        # Passamos os dados PEM diretamente como bytes (signxml aceita)
+        signer = XMLSigner(
+            method=methods.enveloped,
+            signature_algorithm='rsa-sha256',
+            digest_algorithm='sha256',
+            c14n_algorithm='http://www.w3.org/2001/10/xml-exc-c14n#'
+        )
         
-        try:
-            # Criar signer com algoritmo rsa-sha1
-            signer = XMLSigner(
-                method=methods.enveloped,
-                signature_algorithm='rsa-sha1',
-                digest_algorithm='sha1'
-            )
-            
-            # Assinar o XML
-            # O signxml espera que o elemento tenha um atributo Id para referenciar
-            signed_xml = signer.sign(
-                xml,
-                key=temp_pem_path
-            )
-            
-            return signed_xml
-            
-        finally:
-            # Limpar arquivo temporário
-            if os.path.exists(temp_pem_path):
-                os.remove(temp_pem_path)
+        # Assinar o XML passando a chave como bytes
+        # O signxml espera que o elemento tenha um atributo Id para referenciar
+        signed_xml = signer.sign(
+            xml,
+            key=pem_data
+        )
+        
+        return signed_xml
                 
     except Exception as e:
         raise CertificateError(

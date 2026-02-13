@@ -1,6 +1,6 @@
 # 🚀 nfse-cli
 
-Ferramenta de linha de comando (CLI) em Python para emissão, consulta e download de **Nota Fiscal de Serviço Eletrônica (NFS-e)** no padrão Nacional.
+Ferramenta de linha de comando (CLI) em Python para emissão e download de **Nota Fiscal de Serviço Eletrônica (NFS-e)** no padrão Nacional.
 
 Esta ferramenta simplifica a integração com a API Sefin Nacional, permitindo a automação da emissão de notas fiscais diretamente do terminal.
 
@@ -8,7 +8,7 @@ Esta ferramenta simplifica a integração com a API Sefin Nacional, permitindo a
 
 ## 📖 Guia Rápido
 
-### 🎯 Início Rápido em 3 Passos
+### 🎯 Início Rápido em 5 Passos
 
 #### 1. Instale as dependências
 ```bash
@@ -26,95 +26,51 @@ Este comando irá:
 - Solicitar dados do serviço principal
 - Criar arquivo `config.json` com valores padrão
 
-#### 3. Emita sua primeira nota (modo teste)
+#### 3. Configure o certificado digital
 ```bash
-python nfse.py emitir --valor 1500.00 --data 2026-03-15T14:30:00-03:00 --dry-run
+# Copie seu certificado .pfx para o diretório cert (criado pelo init)
+# Exemplo: cert/certificado.pfx
+
+# Crie um arquivo com a senha do certificado
+echo "SUA_SENHA_AQUI" > cert/certificado.secret
 ```
 
-### 💡 Conceitos Importantes
-
-**As chaves dos arquivos JSON correspondem EXATAMENTE às tags XML do DPS oficial.**
-
-Isso significa que você pode consultar a documentação oficial do schema XML da NFS-e e usar os mesmos nomes de tags como chaves nos arquivos JSON.
-
-### 📁 Estrutura de Diretórios
-
-```
-nfse-cli/
-├── config.json.example            # Exemplo de configuração
-│
-├── prestadores/
-│   ├── README.md                  # Guia do diretório
-│   └── prestador.json.example     # Exemplo COM comentários
-│
-├── tomadores/
-│   ├── README.md                  # Guia do diretório
-│   └── tomador.json.example       # Exemplo COM comentários
-│
-└── servicos/
-    ├── README.md                  # Guia do diretório
-    ├── servico.json.example       # Exemplo básico COM comentários
-    └── servico_com_ibscbs.json.example  # Exemplo com IBS/CBS
-```
-
-
-### 🔑 Entendendo os Comentários nos Arquivos
-
-Todos os arquivos de exemplo incluem comentários explicativos usando chaves que começam com `_comentario`:
-
-```json
-{
-  "_comentario": "Arquivo de configuração principal",
-  
-  "ambiente": "producaorestrita",
-  "_comentario_ambiente": "Ambiente da API: 'producao' ou 'producaorestrita'",
-  "_comentario_ambiente_xml": "Corresponde à tag XML <tpAmb>",
-  
-  "dry_run": true,
-  "_comentario_dry_run": "Modo simulação: true = não envia, false = envia"
-}
-```
-
-**Tipos de comentários:**
-- `_comentario`: Descrição geral do arquivo
-- `_comentario_CAMPO`: Explicação do campo
-- `_comentario_CAMPO_xml`: Tag XML correspondente
-- `_comentario_CAMPO_dica`: Dica de uso
-
-**Importante:** As chaves `_comentario*` são ignoradas pelo sistema e podem ser removidas se você preferir arquivos mais limpos.
-
-### 🚀 Comandos Disponíveis
-
-#### Inicializar
+#### 4. Crie um arquivo de tomador
 ```bash
+# Copie o exemplo e edite com os dados do cliente
+cp tomadores/tomador.json.example tomadores/tomador.json
+
+# Edite o arquivo com os dados reais do cliente
+# Mínimo necessário: CNPJ ou CPF, xNome, email
+```
+
+#### 5. Emita sua primeira nota (modo teste)
+```bash
+python nfse.py emitir --valor 1500.00 --data 2026-03-15 --tomador tomadores/tomador.json --dry-run
+```
+
+### 💡 Comandos Principais
+
+```bash
+# Inicializar projeto
 python nfse.py init
-```
 
-#### Emitir (modo teste)
-```bash
-python nfse.py emitir --valor 1500.00 --data 2026-03-15T14:30:00-03:00 --dry-run
-```
+# Emitir nota fiscal (modo simulação)
+python nfse.py emitir --valor 1500.00 --data 2026-03-15 --tomador tomadores/tomador.json --dry-run
 
-#### Emitir (produção)
-```bash
-python nfse.py emitir --valor 1500.00 --data 2026-03-15T14:30:00-03:00
-```
+# Emitir nota fiscal com vírgula e data brasileira
+python nfse.py emitir --valor 1500,00 --data 15/03/2026 --tomador tomadores/tomador.json --dry-run
 
-#### Baixar DANFSe
-```bash
-python nfse.py danfse CHAVE_DE_ACESSO_50_DIGITOS
-```
+# Emitir nota fiscal (envio real)
+python nfse.py emitir --valor 1500.00 --data 2026-03-15 --tomador tomadores/tomador.json --no-dry-run
 
-#### Importar NFS-e
-```bash
-python nfse.py importar CHAVE_DE_ACESSO_50_DIGITOS
+# Baixar XML e PDF de uma nota existente
+python nfse.py baixar <chave_acesso_50_digitos>
 ```
 
 ---
 
 ## 📖 Estrutura de Arquivos JSON
-
-### Princípio Fundamental
 
 **As chaves dos arquivos JSON correspondem EXATAMENTE às tags XML oficiais do DPS.**
 
@@ -126,11 +82,17 @@ Isso garante consistência e facilita o entendimento da estrutura.
 
 | Campo | Descrição | Tag XML |
 |-------|-----------|---------|
-| `ambiente` | "producao" ou "producaorestrita" | `<tpAmb>` |
-| `dry_run` | true = simula, false = envia | - |
+| `arquivo_cert_pfx` | Caminho do certificado digital PFX | - |
+| `arquivo_cert_senha` | Caminho do arquivo com senha do certificado | - |
 | `serie` | Série do DPS (normalmente 1) | `<serie>` |
 | `proximo_numero` | Número sequencial (auto-incrementado) | `<nDPS>` |
 | `versao_aplicativo` | Versão do nfse-cli | `<verAplic>` |
+| `defaults.ambiente` | "producao" ou "producaorestrita" | `<tpAmb>` |
+| `defaults.dry_run` | true = simula, false = envia | - |
+| `defaults.timeout` | Timeout em segundos para requisições HTTP | - |
+| `defaults.prestador` | Caminho padrão do arquivo do prestador | - |
+| `defaults.tomador` | Caminho padrão do arquivo do tomador | - |
+| `defaults.servicos` | Caminho padrão do arquivo do serviço | - |
 
 #### Prestador
 
@@ -175,7 +137,7 @@ Isso garante consistência e facilita o entendimento da estrutura.
 
 | Campo | Descrição | Tag XML |
 |-------|-----------|---------|
-| `xDescServ` | Descrição do serviço | `<xDescServ>` |
+| `xDescServ` | Descrição do serviço (pode ser sobrescrita via `--descricao` na linha de comando) | `<xDescServ>` |
 | `cTribNac` | Código tributação (6 dígitos) | `<cTribNac>` |
 | `cLocPrestacao` | Município da prestação | `<cLocPrestacao>` |
 | `aliquota` | Alíquota ISSQN % (opcional) | - |
@@ -373,23 +335,12 @@ git clone https://github.com/seu-usuario/nfse-cli.git
 cd nfse-cli
 ```
 
-#### 2. Criar ambiente virtual (recomendado)
+#### 2. Instalar dependências
 ```bash
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
-```
-
-#### 3. Instalar dependências
-```bash
-# Dependências de produção
 pip install -r requirements.txt
-
-# Dependências de desenvolvimento (para testes)
-pip install -r requirements-dev.txt
 ```
 
-#### 4. Inicializar o projeto
+#### 3. Inicializar o projeto
 ```bash
 python nfse.py init
 ```
@@ -408,8 +359,8 @@ python nfse.py init
 3. Configure os caminhos no `config.json.example` e copie para `config.json`:
    ```json
    {
-     "arquivo_pfx": "cert/certificado.pfx",
-     "arquivo_senha_cert": "cert/certificado.secret"
+     "arquivo_cert_pfx": "cert/certificado.pfx",
+     "arquivo_cert_senha": "cert/certificado.secret"
    }
    ```
 
@@ -452,17 +403,31 @@ python nfse.py --silent <comando>
 - Modo verbose exibe: XML gerado, payloads, URLs de requisição, headers HTTP
 - Útil para debug e troubleshooting
 
+### Controle de Timeout
+
+```bash
+# Definir timeout de 60 segundos
+python nfse.py -t 60 <comando>
+python nfse.py --timeout 60 <comando>
+```
+
+**Observações:**
+- Sobrescreve o timeout configurado em `config.json` (defaults.timeout)
+- Padrão: 30 segundos
+- Útil quando a API está lenta ou há problemas de conexão
+- Aplica-se a todas as requisições HTTP (emissão, consulta, download)
+
 ### Exemplos Combinados
 
 ```bash
-# Baixar DANFSe em produção com debug
-python nfse.py --producao -v danfse <chave_acesso>
+# Baixar XML e PDF em produção com debug e timeout de 60s
+python nfse.py --producao -v -t 60 baixar <chave_acesso>
 
-# Emitir nota em produção restrita sem mensagens
-python nfse.py --ambiente producaorestrita -s emitir --valor 1500.00 --data 2026-03-15
+# Emitir nota em produção restrita sem mensagens e timeout de 45s
+python nfse.py --ambiente producaorestrita -s --timeout 45 emitir --valor 1500.00 --data 2026-03-15 --tomador tomadores/tomador.json
 
-# Consultar NFS-e em produção
-python nfse.py --producao importar <chave_acesso>
+# Emitir nota em produção com timeout customizado
+python nfse.py --producao -t 90 emitir --valor 1500.00 --data 2026-03-15 --tomador tomadores/tomador.json
 ```
 
 ---
@@ -492,64 +457,86 @@ Emite uma NFS-e com os dados fornecidos.
 - `--data`: Data/hora de emissão no formato YYYY-MM-DD (ex: 2026-03-15). Também aceita formato DD/MM/YYYY (ex: 15/03/2026)
 
 **Parâmetros opcionais:**
-- `--dry-run`: Modo de simulação (não envia para API)
+- `--dry-run`: Ativa modo de simulação (não envia para API). Sobrescreve o valor do config.json
+- `--no-dry-run`: Desativa modo de simulação (envia para API real). Sobrescreve o valor do config.json
 - `--prestador`: Caminho do arquivo JSON do prestador
 - `--tomador`: Caminho do arquivo JSON do tomador
 - `--servico`: Caminho do arquivo JSON do serviço
+- `--descricao`: Descrição do serviço (sobrescreve a descrição do arquivo JSON)
 
 **Exemplos:**
 
 ```bash
-# Emitir nota (parâmetros obrigatórios com ponto)
-python nfse.py emitir --valor 1500.00 --data 2026-03-15T14:30:00-03:00
+# Emitir nota (formato YYYY-MM-DD)
+python nfse.py emitir --valor 1500.00 --data 2026-03-15 --tomador tomadores/tomador.json
 
-# Emitir nota (usando vírgula como separador decimal)
-python nfse.py emitir --valor 1500,00 --data 2026-03-15T14:30:00-03:00
+# Emitir nota (formato DD/MM/YYYY com vírgula)
+python nfse.py emitir --valor 1500,00 --data 15/03/2026 --tomador tomadores/tomador.json
 
-# Emitir em modo dry-run (simulação)
-python nfse.py emitir --valor 1500.00 --data 2026-03-15T14:30:00-03:00 --dry-run
+# Emitir em modo dry-run (simulação) - sobrescreve config.json
+python nfse.py emitir --valor 1500.00 --data 2026-03-15 --tomador tomadores/tomador.json --dry-run
+
+# Forçar envio real mesmo se config.json tem defaults.dry_run: true
+python nfse.py emitir --valor 1500.00 --data 2026-03-15 --tomador tomadores/tomador.json --no-dry-run
 
 # Usar tomador específico
-python nfse.py emitir --valor 1500.00 --data 2026-03-15T14:30:00-03:00 --tomador tomadores/cliente_especial.json
+python nfse.py emitir --valor 1500.00 --data 2026-03-15 --tomador tomadores/cliente_especial.json
 
 # Modo verbose (exibe detalhes técnicos)
-python nfse.py emitir --valor 1500.00 --data 2026-03-15T14:30:00-03:00 --verbose
+python nfse.py emitir --valor 1500.00 --data 2026-03-15 --tomador tomadores/tomador.json --verbose
 
 # Usar arquivos em subdiretórios
-python nfse.py emitir --valor 1500.00 --data 2026-03-15T14:30:00-03:00 \
+python nfse.py emitir --valor 1500.00 --data 2026-03-15 \
   --prestador prestadores/empresa_a/prestador.json \
   --tomador tomadores/clientes_sp/cliente.json \
   --servico servicos/consultoria/servico.json
+
+# Sobrescrever descrição do serviço
+python nfse.py emitir --valor 1500.00 --data 2026-03-15 \
+  --tomador tomadores/tomador.json \
+  --descricao "Consultoria em TI - Projeto X - Sprint 3"
+
+# Combinar descrição customizada com serviço específico
+python nfse.py emitir --valor 2500.00 --data 2026-03-15 \
+  --tomador tomadores/tomador.json \
+  --servico servicos/consultoria/servico_010101.json \
+  --descricao "Desenvolvimento de módulo de autenticação OAuth2"
 ```
 
-### Comando: danfse
+**Sobre o parâmetro `--descricao`:**
+- Sobrescreve o campo `xDescServ` do arquivo JSON do serviço
+- Útil quando você tem um serviço padrão mas precisa especificar detalhes da nota
+- Use aspas duplas para descrições com espaços
+- Corresponde à tag XML `<xDescServ>`
+- Máximo: 2000 caracteres
 
-Baixa o PDF (DANFSe) de uma nota emitida:
+### Comando: baixar
 
-```bash
-python nfse.py danfse <chave_de_acesso_50_digitos>
-```
+Baixa o XML e o PDF (DANFSe) de uma NFS-e existente.
+
+**Parâmetro obrigatório:**
+- `chave_acesso`: Chave de acesso da NFS-e (50 dígitos)
 
 **Comportamento:**
-- Tenta consultar a NFS-e para obter dados do prestador e tomador
-- Se bem-sucedido, salva com nome completo: `{timestamp}_{cnpj_prestador}_{documento_tomador}_{chave_acesso}.pdf`
-- Se falhar, salva com nome simplificado: `{timestamp}_{chave_acesso}.pdf`
-- NÃO cria arquivo de log (apenas para emissões)
+- Tenta baixar o XML da NFS-e e salva em `nfse/`
+- Tenta baixar o PDF (DANFSe) e salva em `danfse/`
+- Se um dos downloads falhar, ainda tenta baixar o outro
+- Os arquivos são salvos com formato: `{timestamp}_{cnpj_prestador}_{documento_tomador}_{chave_acesso}.{extensao}`
+- Se não conseguir extrair dados do prestador/tomador, usa formato simplificado: `{timestamp}_{chave_acesso}.{extensao}`
+- NÃO cria arquivo de log
 
-### Comando: importar
-
-Importa dados de uma nota existente para criar templates JSON:
+**Exemplos:**
 
 ```bash
-python nfse.py importar <chave_de_acesso_50_digitos>
-```
+# Baixar em ambiente de produção restrita (padrão)
+python nfse.py baixar 35503082123456780001900001000000000000001234567890
 
-**Comportamento:**
-- Consulta a NFS-e pela chave de acesso
-- Extrai dados do prestador e salva em `prestadores/prestador_{timestamp}.json`
-- Extrai dados do tomador e salva em `tomadores/tomador_{timestamp}.json`
-- Extrai dados do serviço e salva em `servicos/servico_{timestamp}.json`
-- Usa chaves compatíveis com tags XML oficiais
+# Baixar em ambiente de produção
+python nfse.py --producao baixar 35503082123456780001900001000000000000001234567890
+
+# Baixar com modo verbose (exibe detalhes)
+python nfse.py -v baixar 35503082123456780001900001000000000000001234567890
+```
 
 ---
 
@@ -558,17 +545,21 @@ python nfse.py importar <chave_de_acesso_50_digitos>
 ### Produção Restrita (Testes)
 - **URL**: `https://adn.producaorestrita.nfse.gov.br`
 - Use este ambiente para testes e desenvolvimento
-- Configuração padrão: `"ambiente": "producaorestrita"`
+- Configuração padrão: `"defaults": { "ambiente": "producaorestrita" }`
 
 ### Produção
 - **URL**: `https://adn.nfse.gov.br`
 - Use apenas para emissões reais
-- Configuração: `"ambiente": "producao"`
+- Configuração: `"defaults": { "ambiente": "producao" }`
 
 ### Modo Dry-Run
 - Simula todas as operações sem enviar dados para a API
 - Útil para validar dados e testar o fluxo
-- Configuração: `"dry_run": true`
+- Configuração padrão: `"defaults": { "dry_run": true }` no config.json
+- Pode ser sobrescrito via linha de comando:
+  - `--dry-run`: força modo simulação (mesmo se config.json tem false)
+  - `--no-dry-run`: força envio real (mesmo se config.json tem true)
+  - Sem parâmetro: usa o valor do config.json
 - Salva DPS e logs normalmente
 - NÃO salva NFS-e (pois não houve emissão real)
 
@@ -578,7 +569,14 @@ python nfse.py importar <chave_de_acesso_50_digitos>
 
 ### 1. Sempre teste com dry-run primeiro
 ```bash
-python nfse.py emitir --valor 1500.00 --data 2026-03-15T14:30:00-03:00 --dry-run
+# Se config.json tem defaults.dry_run: false, force simulação
+python nfse.py emitir --valor 1500.00 --data 2026-03-15 --tomador tomadores/tomador.json --dry-run
+
+# Se config.json tem defaults.dry_run: true, não precisa passar parâmetro
+python nfse.py emitir --valor 1500.00 --data 2026-03-15 --tomador tomadores/tomador.json
+
+# Para enviar de verdade quando config.json tem defaults.dry_run: true
+python nfse.py emitir --valor 1500.00 --data 2026-03-15 --tomador tomadores/tomador.json --no-dry-run
 ```
 
 ### 2. Use os arquivos .example como base
@@ -601,10 +599,13 @@ prestadores/
 ```
 
 ### 4. Configure defaults no config.json
-Copie `config.json.example` para `config.json` e configure defaults para evitar especificar `--prestador`, `--tomador` e `--servico` toda vez, se preferir:
+Copie `config.json.example` para `config.json` e configure defaults para evitar especificar parâmetros na linha de comando:
 ```json
 {
   "defaults": {
+    "ambiente": "producaorestrita",
+    "dry_run": true,
+    "timeout": 30,
     "prestador": "prestadores/prestador.json",
     "tomador": "tomadores/tomador_principal.json",
     "servicos": "servicos/servico.json"
@@ -618,13 +619,17 @@ As chaves `_comentario*` podem ser removidas para arquivos mais limpos:
 # Antes
 {
   "_comentario": "Arquivo de configuração",
-  "ambiente": "producaorestrita",
+  "defaults": {
+    "ambiente": "producaorestrita"
+  },
   "_comentario_ambiente": "Ambiente da API"
 }
 
 # Depois
 {
-  "ambiente": "producaorestrita"
+  "defaults": {
+    "ambiente": "producaorestrita"
+  }
 }
 ```
 
@@ -645,6 +650,11 @@ As chaves `_comentario*` podem ser removidas para arquivos mais limpos:
 
 O projeto utiliza **pytest** para testes unitários e **Hypothesis** para property-based testing.
 
+### Instalar dependências de teste
+```bash
+pip install -r requirements-dev.txt
+```
+
 ### Executar todos os testes
 ```bash
 pytest
@@ -660,19 +670,13 @@ pytest --cov=nfse_core --cov-report=html --cov-report=term
 # Apenas testes de modelos
 pytest tests/test_models.py
 
-# Apenas testes unitários
-pytest -m unit
-
-# Apenas property-based tests
-pytest -m property
-
 # Modo verbose
 pytest -v
 ```
 
 ### Estrutura de Testes
-- ✅ 53 testes unitários
-- ✅ Validação de Endereco, RegimeTributario, Prestador, Tomador, Servico, IBSCBS
+- ✅ 58 testes unitários
+- ✅ Validação de Endereco, RegimeTributario, Prestador, Tomador, Servico
 - ✅ Testes de carregamento/salvamento de arquivos JSON
 - ✅ Testes de validação de campos obrigatórios e formatos
 - ✅ Testes de logging estruturado e metadados do sistema
@@ -757,9 +761,9 @@ Interface de linha de comando:
 
 ## 🐛 Troubleshooting
 
-### Erro: "os seguintes argumentos são obrigatórios: --data" ou "--valor"
-- Ambos os parâmetros `--valor` e `--data` são obrigatórios no comando `emitir`
-- Exemplo correto: `python nfse.py emitir --valor 1500.00 --data 2024-01-15T14:30:00-03:00`
+### Erro: "os seguintes argumentos são obrigatórios: --data", "--valor" ou "--tomador"
+- Os parâmetros `--valor`, `--data` e `--tomador` são obrigatórios no comando `emitir`
+- Exemplo correto: `python nfse.py emitir --valor 1500.00 --data 2026-03-15 --tomador tomadores/tomador.json`
 - Use `python nfse.py emitir --help` para ver todos os parâmetros
 
 ### Erro: "Certificado expirado"
@@ -784,9 +788,8 @@ Interface de linha de comando:
 - Use o código IBGE oficial do município
 
 ### Erro: "Data em formato inválido"
-- A data deve estar no formato ISO 8601: `YYYY-MM-DDTHH:MM:SS-03:00`
-- Exemplo: `2026-03-15T14:30:00-03:00`
-- Inclua o fuso horário (-03:00 para horário de Brasília)
+- A data deve estar no formato `YYYY-MM-DD` (ex: 2026-03-15) ou `DD/MM/YYYY` (ex: 15/03/2026)
+- O sistema aceita ambos os formatos automaticamente
 
 ### Erro: "Alíquota ultrapassa 5%"
 - A alíquota máxima do ISSQN é 5%
@@ -807,7 +810,7 @@ Interface de linha de comando:
 - Adicione o grupo IBSCBS no arquivo JSON do serviço
 
 ### Testes falhando
-- Certifique-se de que instalou as dependências de desenvolvimento: `pip install -r requirements-dev.txt`
+- Instale as dependências de teste: `pip install -r requirements-dev.txt`
 - Execute `pytest -v` para ver detalhes dos erros
 
 ---
@@ -863,7 +866,10 @@ Este projeto está licenciado sob a licença **MIT** - veja o arquivo `LICENSE` 
 ## 🆘 Suporte
 
 Para dúvidas e problemas:
-1. Consulte a documentação nos diretórios `prestadores/`, `tomadores/` e `servicos/`
+1. Consulte os guias detalhados dos diretórios:
+   - [Prestadores - Guia Completo](prestadores/README.md)
+   - [Tomadores - Guia Completo](tomadores/README.md)
+   - [Serviços - Guia Completo](servicos/README.md)
 2. Verifique os arquivos de exemplo (`.example`)
 3. Leia os comentários inline nos arquivos JSON
 4. Abra uma issue no GitHub

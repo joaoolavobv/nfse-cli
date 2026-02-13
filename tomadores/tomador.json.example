@@ -1,35 +1,74 @@
 {
   "_comentario": "Arquivo de exemplo para dados do TOMADOR de serviços (cliente)",
-  "_comentario_estrutura": "As chaves deste arquivo correspondem diretamente às tags XML do DPS",
+  "_comentario_uso": "Este arquivo define os dados do cliente que está contratando o serviço",
+  "_comentario_estrutura": "As chaves correspondem diretamente às tags XML do DPS",
+  "_comentario_multiplos": "Você pode criar múltiplos arquivos para diferentes clientes (ex: tomador_12345678000195.json, tomador_98765432000100.json)",
   
-  "CNPJ": "98765432000100",
-  "_comentario_CNPJ": "Tag XML: <CNPJ> - CNPJ do tomador (14 dígitos). Use CNPJ OU CPF, não ambos",
+  "CNPJ": "98765432000187",
+  "_comentario_CNPJ": "Tag XML: <CNPJ> - CNPJ do tomador (14 dígitos numéricos, sem pontos/traços)",
+  "_comentario_CNPJ_ou_CPF": "Use CNPJ OU CPF, nunca ambos. Para pessoa física, deixe CNPJ como null e preencha CPF",
+  "_comentario_CNPJ_validacao": "O sistema valida o dígito verificador do CNPJ",
   
   "CPF": null,
-  "_comentario_CPF": "Tag XML: <CPF> - CPF do tomador (11 dígitos). Use CPF OU CNPJ, não ambos",
+  "_comentario_CPF": "Tag XML: <CPF> - CPF do tomador (11 dígitos numéricos, sem pontos/traços)",
+  "_comentario_CPF_quando": "Use se o cliente for pessoa física. Deixe null se usar CNPJ",
+  "_comentario_CPF_validacao": "O sistema valida o dígito verificador do CPF",
+  "_comentario_CPF_exemplo": "Para pessoa física, use: \"CPF\": \"12345678901\", \"CNPJ\": null",
   
-  "xNome": "CLIENTE EXEMPLO LTDA",
-  "_comentario_xNome": "Tag XML: <xNome> - Nome ou razão social do tomador",
+  "xNome": "CLIENTE EXEMPLO COMERCIO E SERVICOS LTDA",
+  "_comentario_xNome": "Tag XML: <xNome> - Razão social ou nome completo do tomador (OBRIGATÓRIO)",
+  "_comentario_xNome_dica": "Use o nome exatamente como consta no CNPJ/CPF do cliente",
+  "_comentario_xNome_tamanho": "Máximo: 150 caracteres",
   
-  "email": "financeiro@cliente.com.br",
-  "_comentario_email": "Tag XML: <email> - Email do tomador (opcional)",
+  "email": "financeiro@clienteexemplo.com.br",
+  "_comentario_email": "Tag XML: <email> - Email do tomador (opcional, mas recomendado)",
+  "_comentario_email_uso": "O cliente receberá a NFS-e neste email",
+  "_comentario_email_tamanho": "Máximo: 80 caracteres",
+  
+  "fone": "11912345678",
+  "_comentario_fone": "Tag XML: <fone> - Telefone de contato do tomador (opcional)",
+  "_comentario_fone_formato": "Apenas números, com DDD. Exemplo: 11912345678",
+  "_comentario_fone_tamanho": "Máximo: 20 dígitos",
   
   "end": {
-    "_comentario_end": "Tag XML: <end> - Endereço do tomador (opcional, mas recomendado)",
+    "_comentario_end": "Tag XML: <end> - Endereço completo do tomador (opcional, mas recomendado)",
+    "_comentario_end_quando": "Alguns municípios exigem o endereço do tomador. Recomendado sempre preencher",
+    "_comentario_end_importante": "Se o tomador for de outro município, isso pode afetar a tributação",
+    
+    "endNac": {
+      "_comentario_endNac": "Tag XML: <endNac> - Endereço nacional (dentro do Brasil)",
+      
+      "cMun": "3550308",
+      "_comentario_cMun": "Tag XML: <cMun> - Código do município IBGE do tomador (7 dígitos)",
+      "_comentario_cMun_exemplo": "3550308 = São Paulo/SP, 3304557 = Rio de Janeiro/RJ, 5300108 = Brasília/DF",
+      "_comentario_cMun_consulta": "Consulte em: https://www.ibge.gov.br/explica/codigos-dos-municipios.php",
+      "_comentario_cMun_tributacao": "Este código pode afetar o local de incidência do ISSQN",
+      
+      "CEP": "01310100",
+      "_comentario_CEP": "Tag XML: <CEP> - CEP sem hífen (8 dígitos numéricos)",
+      "_comentario_CEP_validacao": "O sistema valida o formato do CEP"
+    },
     
     "xLgr": "Avenida Paulista",
-    "_comentario_xLgr": "Tag XML: <xLgr> - Logradouro (rua, avenida, etc.)",
+    "_comentario_xLgr": "Tag XML: <xLgr> - Logradouro (rua, avenida, travessa, etc.)",
+    "_comentario_xLgr_tamanho": "Máximo: 125 caracteres",
     
-    "nro": "1000",
+    "nro": "1578",
     "_comentario_nro": "Tag XML: <nro> - Número do endereço",
+    "_comentario_nro_sem_numero": "Use 'S/N' se não houver número",
+    
+    "xCpl": "Conjunto 142",
+    "_comentario_xCpl": "Tag XML: <xCpl> - Complemento (sala, andar, bloco, etc.) - OPCIONAL",
+    "_comentario_xCpl_tamanho": "Máximo: 60 caracteres",
     
     "xBairro": "Bela Vista",
-    "_comentario_xBairro": "Tag XML: <xBairro> - Bairro",
-    
-    "cMun": "3550308",
-    "_comentario_cMun": "Tag XML: <cMun> dentro de <endNac> - Código do município IBGE (7 dígitos)",
-    
-    "CEP": "01310100",
-    "_comentario_CEP": "Tag XML: <CEP> dentro de <endNac> - CEP sem hífen (8 dígitos)"
-  }
+    "_comentario_xBairro": "Tag XML: <xBairro> - Bairro ou distrito",
+    "_comentario_xBairro_tamanho": "Máximo: 60 caracteres"
+  },
+  
+  "endExt": null,
+  "_comentario_endExt": "Tag XML: <endExt> - Endereço no exterior (use apenas se o tomador for estrangeiro)",
+  "_comentario_endExt_quando": "Deixe null se o tomador for brasileiro. Use apenas para clientes no exterior",
+  "_comentario_endExt_estrutura": "Se necessário, substitua null por: {\"cPais\": \"US\", \"xEndExt\": \"123 Main Street, New York, NY 10001\"}",
+  "_comentario_endExt_cPais": "cPais usa código ISO 3166-1 alpha-2 (2 letras): US, AR, PT, etc."
 }

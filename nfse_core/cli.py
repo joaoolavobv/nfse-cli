@@ -126,10 +126,11 @@ def criar_parser() -> ArgumentParserPtBr:
         epilog="""
 Exemplos de uso:
   nfse init                                      # Inicializar estrutura
-  nfse emitir --valor 1500.00 --data 2024-01-15  # Emitir nota (ponto)
-  nfse emitir --valor 1500,00 --data 15/01/2024 --dry-run  # Simular emissão (vírgula)
-  nfse --producao danfse <chave_acesso>          # Baixar DANFSe em produção
-  nfse --ambiente producaorestrita importar <chave_acesso>  # Importar em produção restrita
+  nfse emitir --valor 1500.00 --data 2024-01-15 --tomador tomadores/tomador.json  # Emitir nota
+  nfse emitir --valor 1500,00 --data 15/01/2024 --tomador tomadores/tomador.json --dry-run  # Simular
+  nfse emitir --valor 800.00 --data 2024-01-15 --tomador tomadores/tomador.json --no-dry-run  # Envio real
+  nfse --producao baixar <chave_acesso>          # Baixar XML e PDF em produção
+  nfse --ambiente producaorestrita baixar <chave_acesso>  # Baixar em produção restrita
 
 Para mais informações sobre cada comando, use:
   nfse <comando> --help
@@ -161,6 +162,13 @@ Para mais informações sobre cada comando, use:
         help='Atalho para --ambiente producao'
     )
     
+    parser.add_argument(
+        '--timeout', '-t',
+        type=int,
+        metavar='SEGUNDOS',
+        help='Timeout em segundos para requisições HTTP (sobrescreve config.json)'
+    )
+    
     # Criar subparsers para comandos
     subparsers = parser.add_subparsers(
         dest='command',
@@ -172,8 +180,7 @@ Para mais informações sobre cada comando, use:
     # Configurar subparser para cada comando
     _configurar_subparser_init(subparsers)
     _configurar_subparser_emitir(subparsers)
-    _configurar_subparser_danfse(subparsers)
-    _configurar_subparser_importar(subparsers)
+    _configurar_subparser_baixar(subparsers)
     
     return parser
 
@@ -191,23 +198,93 @@ def _configurar_subparser_init(subparsers):
         'init',
         help='Inicializa estrutura de diretórios e configuração',
         description="""
-Inicializa a estrutura de diretórios necessária para o funcionamento do sistema
-e opcionalmente coleta dados iniciais da empresa e serviços.
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    INICIALIZAÇÃO DO NFSE-CLI                                 ║
+╚══════════════════════════════════════════════════════════════════════════════╝
 
-Este comando cria os seguintes diretórios:
-  - cert/        : Certificados digitais
-  - logs/        : Logs de operações
-  - prestadores/ : Arquivos JSON de prestadores
-  - tomadores/   : Arquivos JSON de tomadores
-  - servicos/    : Arquivos JSON de serviços
-  - danfse/      : PDFs de DANFSe baixados
-  - nfse/        : XMLs de NFS-e emitidas
-  - dps/         : XMLs de DPS enviadas
+Este comando prepara o ambiente para emissão de NFS-e, criando toda a estrutura
+necessária de diretórios e arquivos de configuração.
 
-Após criar os diretórios, o comando oferece a opção de:
-  1. Inserir dados da empresa (prestador)
-  2. Inserir dados do serviço principal
-  3. Definir arquivos padrão no config.json
+📁 ESTRUTURA DE DIRETÓRIOS CRIADA:
+  
+  cert/          Certificados digitais A1 (formato PFX/PKCS#12)
+                 └─ Coloque aqui seu certificado.pfx e certificado.secret
+  
+  prestadores/   Dados da sua empresa (prestador de serviços)
+                 └─ Crie um arquivo JSON para cada CNPJ/CPF que emite notas
+  
+  tomadores/     Dados dos seus clientes (tomadores de serviços)
+                 └─ Crie um arquivo JSON para cada cliente
+  
+  servicos/      Tipos de serviços que você presta
+                 └─ Crie um arquivo JSON para cada tipo de serviço
+  
+  dps/           XMLs de DPS (Declaração de Prestação de Serviços) enviadas
+                 └─ Backup dos XMLs enviados para a API
+  
+  nfse/          XMLs de NFS-e autorizadas retornadas pela API
+                 └─ Notas fiscais autorizadas pelo governo
+  
+  danfse/        PDFs de DANFSe (Documento Auxiliar da NFS-e)
+                 └─ Versão visual da nota para impressão/envio
+  
+  logs/          Logs de operações do sistema
+                 └─ Histórico de emissões, erros e debug
+
+🔧 PROCESSO INTERATIVO:
+
+Após criar os diretórios, o comando oferece assistência para:
+
+  1️⃣  Cadastrar dados da sua empresa (prestador)
+     • CNPJ ou CPF
+     • Razão social / Nome completo
+     • Endereço completo
+     • Regime tributário (Simples Nacional, MEI, Lucro Real, etc.)
+     • Inscrição Municipal (se aplicável)
+  
+  2️⃣  Cadastrar seu serviço principal
+     • Descrição do serviço
+     • Código de tributação nacional (cTribNac)
+     • Município de prestação
+     • Alíquota de ISSQN (se diferenciada)
+  
+  3️⃣  Configurar arquivos padrão
+     • Define quais arquivos usar por padrão ao emitir notas
+     • Evita ter que especificar na linha de comando toda vez
+
+📝 ARQUIVO DE CONFIGURAÇÃO:
+
+O comando cria/atualiza o arquivo config.json com:
+  • URLs das APIs oficiais do governo
+  • Caminho do certificado digital
+  • Série e numeração sequencial de DPS
+  • Ambiente padrão (produção ou homologação)
+  • Timeout de requisições HTTP
+  • Arquivos padrão de prestador, tomador e serviço
+
+💡 PRÓXIMOS PASSOS APÓS O INIT:
+
+  1. Coloque seu certificado digital A1 na pasta cert/
+  2. Crie o arquivo cert/certificado.secret com a senha do certificado
+  3. Crie arquivos de tomadores (clientes) em tomadores/
+  4. Ajuste o config.json se necessário (ambiente, série, etc.)
+  5. Emita sua primeira nota:
+     python nfse.py emitir --valor 100.00 --data 2026-02-13 --tomador tomadores/tomador.json
+
+🔍 EXEMPLOS DE USO:
+
+  # Inicialização completa (interativa)
+  python nfse.py init
+  
+  # Inicialização silenciosa (apenas cria diretórios)
+  python nfse.py --silent init
+
+⚠️  IMPORTANTE:
+
+  • O comando é seguro: não sobrescreve arquivos existentes
+  • Você pode executar quantas vezes quiser
+  • Use --silent para pular a parte interativa
+  • Arquivos de exemplo (.example) são criados como referência
         """,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -278,8 +355,18 @@ Em modo dry-run, todas as etapas são executadas exceto o envio real para a API.
     
     parser_emitir.add_argument(
         '--dry-run',
+        dest='dry_run',
         action='store_true',
-        help='Modo de simulação. Executa todas as operações exceto o envio real para a API. '
+        default=None,
+        help='Ativa modo de simulação. Executa todas as operações exceto o envio real para a API. '
+             'Sobrescreve o valor do config.json para esta execução.'
+    )
+    
+    parser_emitir.add_argument(
+        '--no-dry-run',
+        dest='dry_run',
+        action='store_false',
+        help='Desativa modo de simulação (envia para API real). '
              'Sobrescreve o valor do config.json para esta execução.'
     )
     
@@ -306,69 +393,48 @@ Em modo dry-run, todas as etapas são executadas exceto o envio real para a API.
              'Se não fornecido, usa o padrão do config.json. '
              'Exemplo: servicos/consultoria/servico_010101.json'
     )
-
-
-def _configurar_subparser_danfse(subparsers):
-    """
-    Configura o subparser para o comando 'danfse'.
     
-    Parâmetro obrigatório:
-        chave_acesso: Chave de acesso da NFS-e (posicional)
-    
-    Requisitos: 8.1
-    """
-    parser_danfse = subparsers.add_parser(
-        'danfse',
-        help='Baixa o PDF (DANFSe) de uma NFS-e',
-        description="""
-Baixa o Documento Auxiliar da Nota Fiscal de Serviço Eletrônica (DANFSe)
-em formato PDF através da API oficial.
-
-O DANFSe é a representação gráfica simplificada da NFS-e, utilizada para
-visualização e impressão.
-
-Este comando NÃO gera arquivo de log, apenas salva o PDF no diretório danfse/.
-        """,
-        formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    
-    # Parâmetro posicional obrigatório
-    parser_danfse.add_argument(
-        'chave_acesso',
+    parser_emitir.add_argument(
+        '--descricao',
         type=str,
-        help='Chave de acesso da NFS-e (50 dígitos). '
-             'Exemplo: 35503082123456780001900001000000000000001234567890'
+        help='Descrição do serviço (tag XML: <xDescServ>). Sobrescreve a descrição do arquivo JSON do serviço. '
+             'Use aspas para descrições com espaços. '
+             'Exemplo: --descricao "Consultoria em TI - Projeto X"'
     )
 
 
-def _configurar_subparser_importar(subparsers):
+def _configurar_subparser_baixar(subparsers):
     """
-    Configura o subparser para o comando 'importar'.
+    Configura o subparser para o comando 'baixar'.
     
     Parâmetro obrigatório:
         chave_acesso: Chave de acesso da NFS-e (posicional)
     
-    Requisitos: 9.1
+    Baixa o XML e o PDF (DANFSe) de uma NFS-e existente.
+    Se um falhar, ainda tenta baixar o outro.
     """
-    parser_importar = subparsers.add_parser(
-        'importar',
-        help='Importa dados de uma NFS-e existente',
+    parser_baixar = subparsers.add_parser(
+        'baixar',
+        help='Baixa XML e PDF (DANFSe) de uma NFS-e',
         description="""
-Importa dados de uma NFS-e existente usando sua chave de acesso.
+Baixa o XML e o PDF (DANFSe) de uma NFS-e existente usando sua chave de acesso.
 
-O comando consulta a API, obtém o XML da NFS-e, e extrai os dados para criar
-arquivos JSON de template:
-  - prestadores/prestador_{timestamp}.json
-  - tomadores/tomador_{timestamp}.json
-  - servicos/servico_{timestamp}.json
+O comando tenta baixar ambos os arquivos:
+  - XML da NFS-e → salvo em nfse/
+  - PDF do DANFSe → salvo em danfse/
 
-Estes arquivos podem ser usados como base para futuras emissões.
+Se um dos downloads falhar, o comando ainda tenta baixar o outro.
+
+Os arquivos são salvos com o formato:
+  {timestamp}_{cnpj_prestador}_{documento_tomador}_{chave_acesso}.{extensao}
+
+Este comando NÃO gera arquivo de log.
         """,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     
     # Parâmetro posicional obrigatório
-    parser_importar.add_argument(
+    parser_baixar.add_argument(
         'chave_acesso',
         type=str,
         help='Chave de acesso da NFS-e (50 dígitos). '
@@ -435,6 +501,12 @@ def processar_ambiente(args, config):
         if VERBOSE:
             print(f"🔧 Ambiente sobrescrito via --ambiente: {args.ambiente}")
     
+    # Processar timeout se fornecido
+    if hasattr(args, 'timeout') and args.timeout:
+        config.timeout = args.timeout
+        if VERBOSE:
+            print(f"🔧 Timeout sobrescrito via --timeout: {args.timeout}s")
+    
     return config
 
 
@@ -495,10 +567,8 @@ def main(argv: Optional[list] = None):
             return executar_init(args)
         elif args.command == 'emitir':
             return executar_emitir(args)
-        elif args.command == 'danfse':
-            return executar_danfse(args)
-        elif args.command == 'importar':
-            return executar_importar(args)
+        elif args.command == 'baixar':
+            return executar_baixar(args)
         else:
             print(f"❌ Comando desconhecido: {args.command}")
             parser.print_help()
@@ -543,7 +613,10 @@ def executar_init(args):
     try:
         # 1. Criar todos os diretórios necessários
         if not silent:
-            print("\n🚀 Inicializando estrutura do nfse-cli...\n")
+            print("\n" + "="*80)
+            print("🚀 INICIALIZANDO NFSE-CLI")
+            print("="*80)
+            print("\n📁 Criando estrutura de diretórios...\n")
         
         FileManager.criar_diretorios(silent=silent)
         
@@ -551,35 +624,54 @@ def executar_init(args):
         config_existe = os.path.exists('config.json')
         config = Config.carregar('config.json')
         
+        if not silent:
+            if config_existe:
+                print("\n✓ Arquivo de configuração encontrado: config.json")
+            else:
+                print("\n✓ Arquivo de configuração criado: config.json")
+            print("\n" + "="*80)
+        
         # 3. Perguntar sobre dados da empresa (prestador)
         if not silent:
-            print("\n" + "="*60)
-            resposta = input("Deseja inserir dados da empresa (prestador)? (s/n): ").strip().lower()
+            print("\n📋 CADASTRO DO PRESTADOR (sua empresa)")
+            print("-"*80)
+            print("\nO prestador é você (ou sua empresa) que está prestando o serviço.")
+            print("Estes dados aparecerão na NFS-e como emissor da nota.\n")
+            resposta = input("Deseja cadastrar os dados do prestador agora? (s/n): ").strip().lower()
         else:
             resposta = 'n'
         
         if resposta in ['s', 'sim', 'y', 'yes']:
             if not silent:
-                print("\n📋 Coletando dados do prestador...\n")
+                print("\n" + "-"*80)
+                print("📝 Coletando dados do prestador...")
+                print("-"*80 + "\n")
             
             # Coletar tipo de documento
             while True:
-                tipo_doc = input("Tipo de documento (1=CNPJ, 2=CPF): ").strip()
+                print("Tipo de documento:")
+                print("  1 = CNPJ (pessoa jurídica)")
+                print("  2 = CPF (pessoa física - MEI ou autônomo)")
+                tipo_doc = input("\nEscolha (1 ou 2): ").strip()
                 if tipo_doc in ['1', '2']:
                     break
-                print("❌ Opção inválida. Digite 1 para CNPJ ou 2 para CPF.")
+                print("❌ Opção inválida. Digite 1 para CNPJ ou 2 para CPF.\n")
             
             # Coletar documento
             while True:
                 if tipo_doc == '1':
-                    documento = input("CNPJ (14 dígitos): ").strip()
+                    print("\n💼 CNPJ do prestador:")
+                    print("Tag XML: <CNPJ>")
+                    documento = input("Digite apenas números (14 dígitos): ").strip()
                     if validar_cnpj(documento):
                         cnpj = documento
                         cpf = None
                         break
                     print("❌ CNPJ inválido. Deve ter 14 dígitos numéricos com DV válido.")
                 else:
-                    documento = input("CPF (11 dígitos): ").strip()
+                    print("\n👤 CPF do prestador:")
+                    print("Tag XML: <CPF>")
+                    documento = input("Digite apenas números (11 dígitos): ").strip()
                     if validar_cpf(documento):
                         cpf = documento
                         cnpj = None
@@ -587,9 +679,15 @@ def executar_init(args):
                     print("❌ CPF inválido. Deve ter 11 dígitos numéricos com DV válido.")
             
             # Coletar nome
-            xNome = input("Nome/Razão Social: ").strip()
+            print("\n📛 Razão Social / Nome Completo:")
+            print("Tag XML: <xNome>")
+            xNome = input("Digite o nome exatamente como consta no CNPJ/CPF: ").strip()
             
             # Coletar código do município
+            print("\n🏙️  Município do prestador:")
+            print("Tag XML: <cMun>")
+            print("Consulte o código IBGE em: https://www.ibge.gov.br/explica/codigos-dos-municipios.php")
+            print("Exemplos: 3550308 = São Paulo/SP, 3304557 = Rio de Janeiro/RJ")
             while True:
                 cMun = input("Código do município IBGE (7 dígitos): ").strip()
                 if validar_codigo_municipio(cMun):
@@ -597,51 +695,69 @@ def executar_init(args):
                 print("❌ Código de município inválido. Deve ter exatamente 7 dígitos numéricos.")
             
             # Coletar inscrição municipal (opcional)
-            IM = input("Inscrição Municipal (opcional, Enter para pular): ").strip()
+            print("\n🏛️  Inscrição Municipal (IM):")
+            print("Tag XML: <IM>")
+            print("Deixe em branco se não tiver ou se não for obrigatório no seu município")
+            IM = input("IM (opcional, Enter para pular): ").strip()
             if not IM:
                 IM = None
             
             # Coletar email (opcional)
+            print("\n📧 Email de contato:")
+            print("Tag XML: <email>")
             email = input("Email (opcional, Enter para pular): ").strip()
             if not email:
                 email = None
             
             # Coletar dados do regime tributário
             if not silent:
-                print("\n📊 Regime Tributário:\n")
+                print("\n" + "-"*80)
+                print("📊 REGIME TRIBUTÁRIO")
+                print("-"*80 + "\n")
             
             while True:
                 print("Opção pelo Simples Nacional:")
-                print("  1 = Não Optante")
-                print("  2 = MEI")
-                print("  3 = ME/EPP")
-                opSimpNac = input("Digite a opção (1, 2 ou 3): ").strip()
+                print("Tag XML: <opSimpNac>")
+                print("  1 = Não Optante (Lucro Real ou Presumido)")
+                print("  2 = MEI (Microempreendedor Individual)")
+                print("  3 = ME/EPP (Simples Nacional)")
+                opSimpNac = input("\nEscolha (1, 2 ou 3): ").strip()
                 if opSimpNac in ['1', '2', '3']:
                     opSimpNac = int(opSimpNac)
                     break
-                print("❌ Opção inválida. Digite 1, 2 ou 3.")
+                print("❌ Opção inválida. Digite 1, 2 ou 3.\n")
             
             while True:
                 print("\nRegime Especial de Tributação:")
-                print("  0 = Nenhum")
-                print("  1-6 ou 9 = Outros regimes especiais")
-                regEspTrib = input("Digite a opção (0-6 ou 9): ").strip()
+                print("Tag XML: <regEspTrib>")
+                print("  0 = Nenhum (mais comum)")
+                print("  1 = Microempresa Municipal")
+                print("  2 = Estimativa")
+                print("  3 = Sociedade de Profissionais")
+                print("  4 = Cooperativa")
+                print("  5 = MEI")
+                print("  6 = ME/EPP")
+                print("  9 = Outros")
+                regEspTrib = input("\nEscolha (0-6 ou 9): ").strip()
                 if regEspTrib in ['0', '1', '2', '3', '4', '5', '6', '9']:
                     regEspTrib = int(regEspTrib)
                     break
-                print("❌ Opção inválida. Digite 0, 1-6 ou 9.")
+                print("❌ Opção inválida. Digite 0, 1-6 ou 9.\n")
             
             # Coletar regApTribSN apenas se opSimpNac = 3
             regApTribSN = None
             if opSimpNac == 3:
                 while True:
-                    print("\nRegime de Apuração (apenas para ME/EPP):")
-                    print("  1, 2 ou 3")
-                    regApTribSN_input = input("Digite a opção (1, 2 ou 3): ").strip()
+                    print("\nRegime de Apuração (apenas para ME/EPP Simples Nacional):")
+                    print("Tag XML: <regApTribSN>")
+                    print("  1 = Microempresa Municipal")
+                    print("  2 = Estimativa")
+                    print("  3 = Sociedade de Profissionais")
+                    regApTribSN_input = input("\nEscolha (1, 2 ou 3): ").strip()
                     if regApTribSN_input in ['1', '2', '3']:
                         regApTribSN = int(regApTribSN_input)
                         break
-                    print("❌ Opção inválida. Digite 1, 2 ou 3.")
+                    print("❌ Opção inválida. Digite 1, 2 ou 3.\n")
             
             # Criar objeto RegimeTributario
             regTrib = RegimeTributario(
@@ -681,7 +797,9 @@ def executar_init(args):
             
             # Perguntar se deseja definir como padrão
             if not silent:
-                resposta_padrao = input("\nDeseja definir este prestador como padrão? (s/n): ").strip().lower()
+                print("\n💾 Definir como padrão:")
+                print("Se definir como padrão, não precisará especificar --prestador ao emitir notas")
+                resposta_padrao = input("Deseja definir este prestador como padrão? (s/n): ").strip().lower()
             else:
                 resposta_padrao = 'n'
             
@@ -692,38 +810,63 @@ def executar_init(args):
         
         # 4. Perguntar sobre dados do serviço
         if not silent:
-            print("\n" + "="*60)
-            resposta_servico = input("Deseja inserir dados do serviço principal? (s/n): ").strip().lower()
+            print("\n" + "="*80)
+            print("\n📋 CADASTRO DO SERVIÇO")
+            print("-"*80)
+            print("\nDefina o tipo de serviço que você presta.")
+            print("Você pode criar múltiplos arquivos para diferentes tipos de serviço.\n")
+            resposta_servico = input("Deseja cadastrar um serviço agora? (s/n): ").strip().lower()
         else:
             resposta_servico = 'n'
         
         if resposta_servico in ['s', 'sim', 'y', 'yes']:
             if not silent:
-                print("\n📋 Coletando dados do serviço...\n")
+                print("\n" + "-"*80)
+                print("📝 Coletando dados do serviço...")
+                print("-"*80 + "\n")
             
             # Coletar descrição do serviço
-            xDescServ = input("Descrição do serviço: ").strip()
+            print("📄 Descrição do serviço:")
+            print("Tag XML: <xDescServ>")
+            print("Seja específico. Exemplo: 'Desenvolvimento de sistema web', 'Consultoria em TI'")
+            xDescServ = input("Descrição: ").strip()
             
             # Coletar código de tributação nacional
+            print("\n🔢 Código de Tributação Nacional:")
+            print("Tag XML: <cTribNac>")
+            print("Consulte a lista em: nfse_docs/anexo_b-nbs2-lista_servico_nacional-snnfse-v1-01-20260122.csv")
+            print("Exemplos: 010101 = Análise e desenvolvimento de sistemas")
+            print("          020201 = Serviços de pesquisas")
+            print("          041601 = Psicologia")
             while True:
-                cTribNac = input("Código de Tributação Nacional (6 dígitos numéricos): ").strip()
+                cTribNac = input("Código (6 dígitos numéricos): ").strip()
                 if validar_codigo_tributacao(cTribNac):
                     break
                 print("❌ Código de tributação inválido. Deve ter exatamente 6 dígitos numéricos.")
             
             # Coletar código do município onde o serviço é prestado
+            print("\n🏙️  Município onde o serviço é prestado:")
+            print("Tag XML: <cLocPrestacao>")
+            print("Normalmente é o mesmo município do prestador")
+            print("Exemplos: 3550308 = São Paulo/SP, 3304557 = Rio de Janeiro/RJ")
             while True:
-                cLocPrestacao = input("Código do município onde o serviço é prestado (7 dígitos): ").strip()
+                cLocPrestacao = input("Código do município IBGE (7 dígitos): ").strip()
                 if validar_codigo_municipio(cLocPrestacao):
                     break
                 print("❌ Código de município inválido. Deve ter exatamente 7 dígitos numéricos.")
             
             # Coletar código de tributação municipal (opcional)
-            cTribMun = input("Código de Tributação Municipal (3 dígitos, opcional, Enter para pular): ").strip()
+            print("\n🏛️  Código de Tributação Municipal:")
+            print("Tag XML: <cTribMun>")
+            print("Alguns municípios têm códigos próprios. Deixe em branco se não souber")
+            cTribMun = input("Código municipal (opcional, Enter para pular): ").strip()
             if not cTribMun:
                 cTribMun = None
             
             # Coletar código NBS (opcional)
+            print("\n📋 Código NBS (Nomenclatura Brasileira de Serviços):")
+            print("Tag XML: <cNBS>")
+            print("Código mais detalhado que o cTribNac. Uso opcional")
             cNBS = input("Código NBS (opcional, Enter para pular): ").strip()
             if not cNBS:
                 cNBS = None
@@ -757,7 +900,9 @@ def executar_init(args):
             
             # Perguntar se deseja definir como padrão
             if not silent:
-                resposta_padrao_servico = input("\nDeseja definir este serviço como padrão? (s/n): ").strip().lower()
+                print("\n💾 Definir como padrão:")
+                print("Se definir como padrão, não precisará especificar --servico ao emitir notas")
+                resposta_padrao_servico = input("Deseja definir este serviço como padrão? (s/n): ").strip().lower()
             else:
                 resposta_padrao_servico = 'n'
             
@@ -770,27 +915,62 @@ def executar_init(args):
         config.salvar('config.json')
         if not config_existe:
             arquivos_criados.append('config.json')
-            if not silent:
-                print("\n✓ Arquivo de configuração criado: config.json")
-        else:
-            if not silent:
-                print("\n✓ Arquivo de configuração atualizado: config.json")
         
         # 6. Exibir mensagem de sucesso
         if not silent:
-            print("\n" + "="*60)
-            print("✅ Inicialização concluída com sucesso!\n")
+            print("\n" + "="*80)
+            print("✅ INICIALIZAÇÃO CONCLUÍDA COM SUCESSO!")
+            print("="*80 + "\n")
             
             if arquivos_criados:
                 print("📁 Arquivos criados:")
                 for arquivo in arquivos_criados:
-                    print(f"   - {arquivo}")
+                    print(f"   ✓ {arquivo}")
             
-            print("\n💡 Próximos passos:")
-            print("   1. Configure seu certificado digital em cert/")
-            print("   2. Use 'python nfse.py emitir --valor <valor> --data <data>' para emitir uma nota")
-            print("   3. Use 'python nfse.py --help' para ver todos os comandos disponíveis")
-            print()
+            print("\n" + "="*80)
+            print("⚠️  IMPORTANTE - DADOS BÁSICOS CADASTRADOS")
+            print("="*80)
+            print("\nOs dados coletados são apenas os CAMPOS OBRIGATÓRIOS mínimos.")
+            print("Para uma configuração mais completa, você pode adicionar:")
+            print("\n📋 Para o PRESTADOR:")
+            print("   • Endereço completo (logradouro, número, bairro, CEP)")
+            print("   • Telefone de contato")
+            print("   • Consulte: prestadores/prestador.json.example")
+            print("\n📋 Para o SERVIÇO:")
+            print("   • Alíquota de ISSQN diferenciada")
+            print("   • Código interno do contribuinte")
+            print("   • Informações de IBS/CBS (se aplicável)")
+            print("   • Consulte: servicos/servico.json.example")
+            print("\n📋 Para o TOMADOR (cliente):")
+            print("   • Crie arquivos JSON em tomadores/ com os dados dos clientes")
+            print("   • Consulte: tomadores/tomador.json.example")
+            print("\n💡 Os arquivos .example contêm explicações detalhadas de TODOS os campos")
+            print("   disponíveis, incluindo as tags XML correspondentes.")
+            
+            print("\n" + "="*80)
+            print("💡 PRÓXIMOS PASSOS:")
+            print("="*80)
+            print("\n1️⃣  Configure seu certificado digital:")
+            print("   • Coloque o arquivo .pfx em: cert/certificado.pfx")
+            print("   • Crie o arquivo: cert/certificado.secret")
+            print("   • Coloque a senha do certificado dentro do arquivo .secret")
+            print("\n2️⃣  Crie arquivos de tomadores (clientes):")
+            print("   • Copie o exemplo: cp tomadores/tomador.json.example tomadores/tomador.json")
+            print("   • Edite com os dados reais do cliente")
+            print("   • Mínimo necessário: CNPJ ou CPF, xNome, email")
+            print("\n3️⃣  Revise e complete os arquivos JSON criados:")
+            print("   • Adicione campos opcionais consultando os arquivos .example")
+            print("   • Adicione endereço completo do prestador (recomendado)")
+            print("   • Crie múltiplos arquivos de tomadores conforme necessário")
+            print("\n4️⃣  Ajuste o config.json se necessário:")
+            print("   • Verifique o ambiente (producaorestrita para testes)")
+            print("   • Ajuste a série e numeração inicial se necessário")
+            print("   • Configure timeout se tiver problemas de conexão")
+            print("\n5️⃣  Emita sua primeira nota:")
+            print("   python nfse.py emitir --valor 100.00 --data 2026-02-13 --tomador tomadores/tomador.json")
+            print("\n6️⃣  Veja todos os comandos disponíveis:")
+            print("   python nfse.py --help")
+            print("\n" + "="*80 + "\n")
         
         return 0
         
@@ -858,10 +1038,6 @@ def executar_emitir(args):
             return 4
         
         # Aplicar override de dry_run se fornecido via CLI
-        if args.dry_run:
-            if not SILENT:
-                print(f"   Ambiente sobrescrito via CLI: {config.ambiente}")
-        
         if args.dry_run is not None:
             config.dry_run = args.dry_run
             if not SILENT:
@@ -905,18 +1081,18 @@ def executar_emitir(args):
             print("🔐 Carregando certificado digital...")
         
         # Verificar se arquivo de certificado existe
-        if not os.path.exists(config.arquivo_pfx):
-            print(f"❌ Erro de Certificado: Arquivo não encontrado: {config.arquivo_pfx}")
+        if not os.path.exists(config.arquivo_cert_pfx):
+            print(f"❌ Erro de Certificado: Arquivo não encontrado: {config.arquivo_cert_pfx}")
             return 2
         
         # Verificar se arquivo de senha existe
-        if not os.path.exists(config.arquivo_senha_cert):
-            print(f"❌ Erro de Certificado: Arquivo de senha não encontrado: {config.arquivo_senha_cert}")
+        if not os.path.exists(config.arquivo_cert_senha):
+            print(f"❌ Erro de Certificado: Arquivo de senha não encontrado: {config.arquivo_cert_senha}")
             return 2
         
         # Ler senha do certificado
         try:
-            with open(config.arquivo_senha_cert, 'r', encoding='utf-8') as f:
+            with open(config.arquivo_cert_senha, 'r', encoding='utf-8') as f:
                 senha_cert = f.read().strip()
         except Exception as e:
             print(f"❌ Erro ao ler senha do certificado: {e}")
@@ -924,7 +1100,7 @@ def executar_emitir(args):
         
         # Validar certificado
         try:
-            cert_info = validar_certificado(config.arquivo_pfx, senha_cert)
+            cert_info = validar_certificado(config.arquivo_cert_pfx, senha_cert)
         except CertificateError as e:
             print(f"❌ Erro de Certificado: {e}")
             return 2
@@ -943,7 +1119,7 @@ def executar_emitir(args):
         
         # Carregar certificado em formato PEM
         try:
-            pem_data = carregar_pfx(config.arquivo_pfx, senha_cert)
+            pem_data = carregar_pfx(config.arquivo_cert_pfx, senha_cert)
         except CertificateError as e:
             print(f"❌ Erro ao carregar certificado: {e}")
             return 2
@@ -1005,6 +1181,15 @@ def executar_emitir(args):
         except Exception as e:
             print(f"❌ Erro ao carregar serviço: {e}")
             return 4
+        
+        # Sobrescrever descrição do serviço se fornecida via CLI
+        if args.descricao:
+            if not SILENT:
+                print(f"✓ Descrição sobrescrita via --descricao")
+                if VERBOSE:
+                    print(f"   Descrição original: {servico.xDescServ}")
+                    print(f"   Nova descrição: {args.descricao}")
+            servico.xDescServ = args.descricao
         
         # === 5. Validar dados de prestador, tomador e serviço ===
         if not SILENT:
@@ -1326,18 +1511,18 @@ def executar_danfse(args):
             print("🔐 Carregando certificado digital...")
         
         # Verificar se arquivo de certificado existe
-        if not os.path.exists(config.arquivo_pfx):
-            print(f"❌ Erro de Certificado: Arquivo não encontrado: {config.arquivo_pfx}")
+        if not os.path.exists(config.arquivo_cert_pfx):
+            print(f"❌ Erro de Certificado: Arquivo não encontrado: {config.arquivo_cert_pfx}")
             return 2
         
         # Verificar se arquivo de senha existe
-        if not os.path.exists(config.arquivo_senha_cert):
-            print(f"❌ Erro de Certificado: Arquivo de senha não encontrado: {config.arquivo_senha_cert}")
+        if not os.path.exists(config.arquivo_cert_senha):
+            print(f"❌ Erro de Certificado: Arquivo de senha não encontrado: {config.arquivo_cert_senha}")
             return 2
         
         # Ler senha do certificado
         try:
-            with open(config.arquivo_senha_cert, 'r', encoding='utf-8') as f:
+            with open(config.arquivo_cert_senha, 'r', encoding='utf-8') as f:
                 senha_cert = f.read().strip()
         except Exception as e:
             print(f"❌ Erro ao ler senha do certificado: {e}")
@@ -1345,7 +1530,7 @@ def executar_danfse(args):
         
         # Validar certificado
         try:
-            cert_info = validar_certificado(config.arquivo_pfx, senha_cert)
+            cert_info = validar_certificado(config.arquivo_cert_pfx, senha_cert)
         except CertificateError as e:
             print(f"❌ Erro de Certificado: {e}")
             return 2
@@ -1362,7 +1547,7 @@ def executar_danfse(args):
         
         # Carregar certificado em formato PEM
         try:
-            pem_data = carregar_pfx(config.arquivo_pfx, senha_cert)
+            pem_data = carregar_pfx(config.arquivo_cert_pfx, senha_cert)
         except CertificateError as e:
             print(f"❌ Erro ao carregar certificado: {e}")
             return 2
@@ -1568,18 +1753,18 @@ def executar_importar(args):
             print("🔐 Carregando certificado digital...")
         
         # Verificar se arquivo de certificado existe
-        if not os.path.exists(config.arquivo_pfx):
-            print(f"❌ Erro de Certificado: Arquivo não encontrado: {config.arquivo_pfx}")
+        if not os.path.exists(config.arquivo_cert_pfx):
+            print(f"❌ Erro de Certificado: Arquivo não encontrado: {config.arquivo_cert_pfx}")
             return 2
         
         # Verificar se arquivo de senha existe
-        if not os.path.exists(config.arquivo_senha_cert):
-            print(f"❌ Erro de Certificado: Arquivo de senha não encontrado: {config.arquivo_senha_cert}")
+        if not os.path.exists(config.arquivo_cert_senha):
+            print(f"❌ Erro de Certificado: Arquivo de senha não encontrado: {config.arquivo_cert_senha}")
             return 2
         
         # Ler senha do certificado
         try:
-            with open(config.arquivo_senha_cert, 'r', encoding='utf-8') as f:
+            with open(config.arquivo_cert_senha, 'r', encoding='utf-8') as f:
                 senha_cert = f.read().strip()
         except Exception as e:
             print(f"❌ Erro ao ler senha do certificado: {e}")
@@ -1587,7 +1772,7 @@ def executar_importar(args):
         
         # Validar certificado
         try:
-            cert_info = validar_certificado(config.arquivo_pfx, senha_cert)
+            cert_info = validar_certificado(config.arquivo_cert_pfx, senha_cert)
         except CertificateError as e:
             print(f"❌ Erro de Certificado: {e}")
             return 2
@@ -1604,7 +1789,7 @@ def executar_importar(args):
         
         # Carregar certificado em formato PEM
         try:
-            pem_data = carregar_pfx(config.arquivo_pfx, senha_cert)
+            pem_data = carregar_pfx(config.arquivo_cert_pfx, senha_cert)
         except CertificateError as e:
             print(f"❌ Erro ao carregar certificado: {e}")
             return 2
@@ -1873,6 +2058,231 @@ def executar_importar(args):
             print(f"   - {caminho_servico}")
         
         return 0
+        
+    except KeyboardInterrupt:
+        print("\n⚠️  Operação cancelada pelo usuário")
+        return 1
+    except Exception as e:
+        print(f"❌ Erro inesperado: {e}")
+        if VERBOSE:
+            import traceback
+            traceback.print_exc()
+        return 1
+
+
+
+def executar_baixar(args):
+    """
+    Executa o comando 'baixar'.
+    
+    Baixa o XML e o PDF (DANFSe) de uma NFS-e existente.
+    Se um falhar, ainda tenta baixar o outro.
+    
+    Fluxo:
+    1. Carregar configuração
+    2. Validar e carregar certificado digital
+    3. Consultar NFS-e para obter XML e dados (prestador/tomador)
+    4. Salvar XML no diretório nfse/
+    5. Baixar PDF (DANFSe)
+    6. Salvar PDF no diretório danfse/
+    
+    Args:
+        args: Namespace com argumentos parseados
+    
+    Returns:
+        Código de saída (0 = sucesso, 1 = falha em ambos, 2 = sucesso parcial)
+    """
+    from .config import Config
+    from .crypto import carregar_pfx, validar_certificado, descomprimir_xml, CertificateError
+    from .api_client import APIClient
+    from .file_manager import FileManager
+    from lxml import etree
+    import requests
+    
+    xml_sucesso = False
+    pdf_sucesso = False
+    
+    try:
+        # === 1. Carregar config.json ===
+        if not SILENT:
+            print("📋 Carregando configuração...")
+        
+        try:
+            config = Config.carregar()
+            config = processar_ambiente(args, config)
+        except Exception as e:
+            print(f"❌ Erro ao carregar configuração: {e}")
+            return 4
+        
+        # === 2. Validar e carregar certificado digital ===
+        if not SILENT:
+            print("🔐 Carregando certificado digital...")
+        
+        if not os.path.exists(config.arquivo_cert_pfx):
+            print(f"❌ Erro de Certificado: Arquivo não encontrado: {config.arquivo_cert_pfx}")
+            return 2
+        
+        if not os.path.exists(config.arquivo_cert_senha):
+            print(f"❌ Erro de Certificado: Arquivo de senha não encontrado: {config.arquivo_cert_senha}")
+            return 2
+        
+        try:
+            with open(config.arquivo_cert_senha, 'r', encoding='utf-8') as f:
+                senha_cert = f.read().strip()
+        except Exception as e:
+            print(f"❌ Erro ao ler senha do certificado: {e}")
+            return 2
+        
+        try:
+            cert_info = validar_certificado(config.arquivo_cert_pfx, senha_cert)
+        except CertificateError as e:
+            print(f"❌ Erro de Certificado: {e}")
+            return 2
+        
+        if not SILENT:
+            print(f"✓ Certificado válido: {cert_info.titular}")
+            print(f"   Emissor: {cert_info.emissor}")
+            print(f"   Validade: {cert_info.validade_fim.strftime('%d/%m/%Y')}")
+            
+            if cert_info.dias_para_expirar < 30:
+                print(f"⚠️  Atenção: Certificado expira em {cert_info.dias_para_expirar} dias")
+        
+        try:
+            pem_data = carregar_pfx(config.arquivo_cert_pfx, senha_cert)
+        except CertificateError as e:
+            print(f"❌ Erro ao carregar certificado: {e}")
+            return 2
+        
+        # === 3. Baixar XML da NFS-e ===
+        documento_prestador = None
+        documento_tomador = None
+        xml_string = None
+        
+        if not SILENT:
+            print(f"📥 Baixando XML da NFS-e: {args.chave_acesso}")
+        
+        try:
+            with APIClient(config, pem_data) as api_client:
+                resposta = api_client.consultar_nfse(args.chave_acesso)
+            
+            if resposta.sucesso and 'nfseXmlGZipB64' in resposta.dados:
+                try:
+                    xml_string = descomprimir_xml(resposta.dados['nfseXmlGZipB64'])
+                    
+                    # Parsear XML para extrair dados
+                    root = etree.fromstring(xml_string.encode('utf-8'))
+                    namespaces = root.nsmap if hasattr(root, 'nsmap') else {}
+                    
+                    def find_element(parent, tag):
+                        elem = parent.find(tag)
+                        if elem is not None:
+                            return elem
+                        if None in namespaces:
+                            elem = parent.find(f"{{{namespaces[None]}}}{tag}")
+                            if elem is not None:
+                                return elem
+                        for ns_prefix, ns_uri in namespaces.items():
+                            if ns_prefix is not None:
+                                elem = parent.find(f"{{{ns_uri}}}{tag}")
+                                if elem is not None:
+                                    return elem
+                        return None
+                    
+                    def get_text(parent, tag, default=""):
+                        elem = find_element(parent, tag)
+                        return elem.text if elem is not None and elem.text else default
+                    
+                    # Extrair documentos
+                    inf_nfse = find_element(root, 'infNFSe')
+                    if inf_nfse is None:
+                        inf_nfse = find_element(root, 'infDPS')
+                    
+                    if inf_nfse is not None:
+                        prest_elem = find_element(inf_nfse, 'prest')
+                        if prest_elem is not None:
+                            cnpj_prestador = get_text(prest_elem, 'CNPJ')
+                            cpf_prestador = get_text(prest_elem, 'CPF')
+                            documento_prestador = cnpj_prestador if cnpj_prestador else cpf_prestador
+                        
+                        toma_elem = find_element(inf_nfse, 'toma')
+                        if toma_elem is not None:
+                            cnpj_tomador = get_text(toma_elem, 'CNPJ')
+                            cpf_tomador = get_text(toma_elem, 'CPF')
+                            documento_tomador = cnpj_tomador if cnpj_tomador else cpf_tomador
+                    
+                    # Salvar XML
+                    timestamp = FileManager.gerar_timestamp()
+                    
+                    if documento_prestador and documento_tomador:
+                        nome_arquivo_xml = f"{timestamp}_{documento_prestador}_{documento_tomador}_{args.chave_acesso}.xml"
+                    else:
+                        nome_arquivo_xml = f"{timestamp}_{args.chave_acesso}.xml"
+                    
+                    FileManager.salvar_nfse(xml_string, nome_arquivo_xml, silent=SILENT)
+                    xml_sucesso = True
+                    
+                    if not SILENT:
+                        print(f"✓ XML salvo: nfse/{nome_arquivo_xml}")
+                
+                except Exception as e:
+                    if not SILENT:
+                        print(f"❌ Erro ao processar/salvar XML: {e}")
+                    if VERBOSE:
+                        import traceback
+                        traceback.print_exc()
+            else:
+                if not SILENT:
+                    print(f"❌ Erro ao baixar XML: {resposta.erro if not resposta.sucesso else 'XML não encontrado na resposta'}")
+        
+        except Exception as e:
+            if not SILENT:
+                print(f"❌ Erro ao baixar XML: {e}")
+            if VERBOSE:
+                import traceback
+                traceback.print_exc()
+        
+        # === 4. Baixar PDF (DANFSe) ===
+        if not SILENT:
+            print(f"📥 Baixando PDF (DANFSe)...")
+        
+        try:
+            with APIClient(config, pem_data) as api_client:
+                pdf_bytes = api_client.baixar_danfse(args.chave_acesso)
+            
+            # Salvar PDF
+            timestamp = FileManager.gerar_timestamp()
+            
+            if documento_prestador and documento_tomador:
+                nome_arquivo_pdf = f"{timestamp}_{documento_prestador}_{documento_tomador}_{args.chave_acesso}.pdf"
+            else:
+                nome_arquivo_pdf = f"{timestamp}_{args.chave_acesso}.pdf"
+            
+            FileManager.salvar_danfse(pdf_bytes, nome_arquivo_pdf, silent=SILENT)
+            pdf_sucesso = True
+            
+            if not SILENT:
+                print(f"✓ PDF salvo: danfse/{nome_arquivo_pdf}")
+        
+        except Exception as e:
+            if not SILENT:
+                print(f"❌ Erro ao baixar/salvar PDF: {e}")
+            if VERBOSE:
+                import traceback
+                traceback.print_exc()
+        
+        # === 5. Resultado final ===
+        if xml_sucesso and pdf_sucesso:
+            if not SILENT:
+                print(f"\n✅ Download completo! XML e PDF salvos com sucesso.")
+            return 0
+        elif xml_sucesso or pdf_sucesso:
+            if not SILENT:
+                print(f"\n⚠️  Download parcial: {'XML' if xml_sucesso else 'PDF'} salvo com sucesso, mas {'PDF' if xml_sucesso else 'XML'} falhou.")
+            return 2
+        else:
+            if not SILENT:
+                print(f"\n❌ Falha no download: Não foi possível baixar XML nem PDF.")
+            return 1
         
     except KeyboardInterrupt:
         print("\n⚠️  Operação cancelada pelo usuário")

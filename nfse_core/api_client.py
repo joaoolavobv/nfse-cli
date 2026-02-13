@@ -148,7 +148,7 @@ class APIClient:
         
         # Construir payload JSON
         payload = {
-            "dps": dps_comprimido
+            "dpsXmlGZipB64": dps_comprimido
         }
         
         # Headers
@@ -163,7 +163,7 @@ class APIClient:
                 json=payload,
                 headers=headers,
                 cert=self.temp_cert_file.name,
-                timeout=30
+                timeout=self.config.timeout
             )
             
             # Processar resposta
@@ -183,6 +183,17 @@ class APIClient:
                 except:
                     mensagem_erro = response.text
                 
+                # Se mensagem está vazia, criar mensagem mais descritiva
+                if not mensagem_erro or mensagem_erro.strip() == '':
+                    if response.status_code == 404:
+                        mensagem_erro = "NFS-e não encontrada. Verifique se a chave de acesso está correta e se a nota existe no ambiente selecionado."
+                    elif response.status_code == 502:
+                        mensagem_erro = "Servidor indisponível (Bad Gateway). O servidor do governo pode estar temporariamente fora do ar."
+                    elif response.status_code == 503:
+                        mensagem_erro = "Serviço indisponível. Tente novamente em alguns minutos."
+                    else:
+                        mensagem_erro = f"Servidor retornou status {response.status_code} sem mensagem de erro."
+                
                 return RespostaAPI(
                     sucesso=False,
                     status_code=response.status_code,
@@ -196,7 +207,7 @@ class APIClient:
                 sucesso=False,
                 status_code=0,
                 dados={},
-                erro="Timeout: A API não respondeu dentro do tempo limite (30 segundos)"
+                erro=f"Timeout: A API não respondeu dentro do tempo limite ({self.config.timeout} segundos)"
             )
         
         except requests.exceptions.ConnectionError as e:
@@ -262,14 +273,25 @@ class APIClient:
             response = requests.get(
                 url,
                 cert=self.temp_cert_file.name,
-                timeout=30
+                timeout=self.config.timeout
             )
             
             # Debug: exibir detalhes da resposta
             if VERBOSE:
                 print(f"🔍 DEBUG: Status code: {response.status_code}")
                 print(f"🔍 DEBUG: Headers: {dict(response.headers)}")
-                print(f"🔍 DEBUG: Response body (primeiros 500 chars): {response.text[:500]}")
+                print(f"🔍 DEBUG: Content-Length: {response.headers.get('content-length', 'N/A')}")
+                print(f"🔍 DEBUG: Content-Type: {response.headers.get('content-type', 'N/A')}")
+                
+                # Tentar exibir corpo da resposta
+                try:
+                    if len(response.text) > 0:
+                        print(f"🔍 DEBUG: Response body (primeiros 1000 chars):")
+                        print(f"   {response.text[:1000]}")
+                    else:
+                        print(f"🔍 DEBUG: Response body: (vazio)")
+                except:
+                    print(f"🔍 DEBUG: Response body: (não foi possível decodificar)")
             
             # Processar resposta
             if response.status_code == 200:
@@ -288,6 +310,17 @@ class APIClient:
                 except:
                     mensagem_erro = response.text
                 
+                # Se mensagem está vazia, criar mensagem mais descritiva
+                if not mensagem_erro or mensagem_erro.strip() == '':
+                    if response.status_code == 404:
+                        mensagem_erro = "NFS-e não encontrada. Verifique se a chave de acesso está correta e se a nota existe no ambiente selecionado."
+                    elif response.status_code == 502:
+                        mensagem_erro = "Servidor indisponível (Bad Gateway). O servidor do governo pode estar temporariamente fora do ar."
+                    elif response.status_code == 503:
+                        mensagem_erro = "Serviço indisponível. Tente novamente em alguns minutos."
+                    else:
+                        mensagem_erro = f"Servidor retornou status {response.status_code} sem mensagem de erro."
+                
                 return RespostaAPI(
                     sucesso=False,
                     status_code=response.status_code,
@@ -301,7 +334,7 @@ class APIClient:
                 sucesso=False,
                 status_code=0,
                 dados={},
-                erro="Timeout: A API não respondeu dentro do tempo limite (30 segundos)"
+                erro=f"Timeout: A API não respondeu dentro do tempo limite ({self.config.timeout} segundos)"
             )
         
         except requests.exceptions.ConnectionError as e:
@@ -366,14 +399,25 @@ class APIClient:
             response = requests.get(
                 url,
                 cert=self.temp_cert_file.name,
-                timeout=30
+                timeout=self.config.timeout
             )
             
             # Debug: exibir detalhes da resposta
             if VERBOSE:
                 print(f"🔍 DEBUG: Status code: {response.status_code}")
                 print(f"🔍 DEBUG: Headers: {dict(response.headers)}")
-                print(f"🔍 DEBUG: Response body (primeiros 500 chars): {response.text[:500]}")
+                print(f"🔍 DEBUG: Content-Length: {response.headers.get('content-length', 'N/A')}")
+                print(f"🔍 DEBUG: Content-Type: {response.headers.get('content-type', 'N/A')}")
+                
+                # Tentar exibir corpo da resposta
+                try:
+                    if len(response.text) > 0:
+                        print(f"🔍 DEBUG: Response body (primeiros 1000 chars):")
+                        print(f"   {response.text[:1000]}")
+                    else:
+                        print(f"🔍 DEBUG: Response body: (vazio)")
+                except:
+                    print(f"🔍 DEBUG: Response body: (não foi possível decodificar)")
             
             # Verificar se a requisição foi bem-sucedida
             if response.status_code == 200:
@@ -393,13 +437,24 @@ class APIClient:
                 except:
                     mensagem_erro = response.text
                 
+                # Se mensagem está vazia, criar mensagem mais descritiva
+                if not mensagem_erro or mensagem_erro.strip() == '':
+                    if response.status_code == 404:
+                        mensagem_erro = "DANFSe não encontrado. Verifique se a chave de acesso está correta e se a nota existe no ambiente selecionado."
+                    elif response.status_code == 502:
+                        mensagem_erro = "Servidor indisponível (Bad Gateway). O servidor do governo pode estar temporariamente fora do ar."
+                    elif response.status_code == 503:
+                        mensagem_erro = "Serviço indisponível. Tente novamente em alguns minutos."
+                    else:
+                        mensagem_erro = f"Servidor retornou status {response.status_code} sem mensagem de erro."
+                
                 raise requests.exceptions.RequestException(
                     f"Erro HTTP {response.status_code}: {mensagem_erro}"
                 )
         
         except requests.exceptions.Timeout:
             raise requests.exceptions.RequestException(
-                "Timeout: A API não respondeu dentro do tempo limite (30 segundos)"
+                f"Timeout: A API não respondeu dentro do tempo limite ({self.config.timeout} segundos)"
             )
         
         except requests.exceptions.ConnectionError as e:

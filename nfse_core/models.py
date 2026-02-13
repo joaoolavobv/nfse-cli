@@ -6,11 +6,39 @@ incluindo validações de campos obrigatórios e formatos.
 """
 
 from dataclasses import dataclass, field, asdict
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 import json
 import os
 import re
+
+
+def _filtrar_comentarios(dados: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Remove chaves que começam com '_comentario' de um dicionário.
+    
+    Args:
+        dados: Dicionário com possíveis chaves de comentário
+        
+    Returns:
+        Dicionário sem chaves de comentário
+    """
+    return {k: v for k, v in dados.items() if not k.startswith('_comentario')}
+
+
+def _converter_para_int(valor: Any) -> int:
+    """
+    Converte um valor para int, aceitando strings numéricas.
+    
+    Args:
+        valor: Valor a ser convertido (int ou str)
+        
+    Returns:
+        Valor como int
+    """
+    if isinstance(valor, str):
+        return int(valor)
+    return int(valor)
 
 
 @dataclass
@@ -123,7 +151,9 @@ class Prestador:
     - xNome: Nome ou razão social
     - cMun: Código do município IBGE (7 dígitos)
     - IM: Inscrição Municipal (opcional)
+    - fone: Telefone (opcional)
     - email: Email (opcional)
+    - end: Endereço completo (opcional)
     - regTrib: Regime tributário (obrigatório)
     """
     CNPJ: Optional[str] = None
@@ -131,7 +161,9 @@ class Prestador:
     xNome: str = ""
     cMun: str = ""
     IM: Optional[str] = None
+    fone: Optional[str] = None
     email: Optional[str] = None
+    end: Optional[Dict] = None  # Endereço completo (opcional, não usado na emissão básica)
     regTrib: Optional[RegimeTributario] = None
     
     @classmethod
@@ -155,9 +187,20 @@ class Prestador:
         with open(caminho, 'r', encoding='utf-8') as f:
             dados = json.load(f)
         
+        # Filtrar comentários do nível raiz
+        dados = _filtrar_comentarios(dados)
+        
         # Converter regTrib de dict para RegimeTributario se presente
         if 'regTrib' in dados and isinstance(dados['regTrib'], dict):
-            dados['regTrib'] = RegimeTributario(**dados['regTrib'])
+            reg_trib_dados = _filtrar_comentarios(dados['regTrib'])
+            # Converter strings para int
+            if 'opSimpNac' in reg_trib_dados:
+                reg_trib_dados['opSimpNac'] = _converter_para_int(reg_trib_dados['opSimpNac'])
+            if 'regEspTrib' in reg_trib_dados:
+                reg_trib_dados['regEspTrib'] = _converter_para_int(reg_trib_dados['regEspTrib'])
+            if 'regApTribSN' in reg_trib_dados and reg_trib_dados['regApTribSN'] is not None:
+                reg_trib_dados['regApTribSN'] = _converter_para_int(reg_trib_dados['regApTribSN'])
+            dados['regTrib'] = RegimeTributario(**reg_trib_dados)
         
         return cls(**dados)
     
@@ -275,9 +318,13 @@ class Tomador:
         with open(caminho, 'r', encoding='utf-8') as f:
             dados = json.load(f)
         
+        # Filtrar comentários
+        dados = _filtrar_comentarios(dados)
+        
         # Converter end de dict para Endereco se presente
         if 'end' in dados and isinstance(dados['end'], dict):
-            dados['end'] = Endereco(**dados['end'])
+            end_dados = _filtrar_comentarios(dados['end'])
+            dados['end'] = Endereco(**end_dados)
         
         return cls(**dados)
     
@@ -445,6 +492,9 @@ class Servico:
         with open(caminho, 'r', encoding='utf-8') as f:
             dados = json.load(f)
         
+        # Filtrar comentários
+        dados = _filtrar_comentarios(dados)
+        
         # Verificar se contém campos proibidos
         if 'vServ' in dados:
             raise ValueError("Campo 'vServ' não deve estar no arquivo JSON do serviço. Use o parâmetro --valor na linha de comando.")
@@ -454,7 +504,8 @@ class Servico:
         
         # Converter IBSCBS de dict para objeto se presente
         if 'ibscbs' in dados and dados['ibscbs'] is not None:
-            dados['ibscbs'] = IBSCBS(**dados['ibscbs'])
+            ibscbs_dados = _filtrar_comentarios(dados['ibscbs'])
+            dados['ibscbs'] = IBSCBS(**ibscbs_dados)
         
         return cls(**dados)
     

@@ -77,6 +77,26 @@ Este diretório contém os arquivos JSON com dados dos **serviços prestados**.
 
 Estes campos são fornecidos no momento da emissão porque variam a cada nota.
 
+## Sobrescrever Descrição via Linha de Comando
+
+Você pode manter uma descrição padrão no arquivo JSON e sobrescrevê-la ao emitir:
+
+```bash
+# Usa a descrição do arquivo JSON
+python nfse.py emitir --valor 1500.00 --data 2026-03-15
+
+# Sobrescreve a descrição para esta nota específica
+python nfse.py emitir --valor 1500.00 --data 2026-03-15 \
+  --descricao "Consultoria em TI - Projeto X - Sprint 3"
+```
+
+**Quando usar:**
+- Você tem um serviço padrão mas precisa especificar detalhes únicos
+- Cada nota tem uma descrição diferente mas usa o mesmo código de tributação
+- Quer manter o arquivo JSON genérico e personalizar na emissão
+
+**Tag XML:** `<xDescServ>` (máximo 2000 caracteres)
+
 ## Regras de Incidência do ISSQN
 
 O código de tributação nacional determina onde o ISSQN incide:
@@ -158,3 +178,7 @@ Com IBSCBS:
 - Remova as chaves `_comentario*` se quiser arquivos mais limpos
 - Consulte a lista oficial de códigos de tributação em `nfse_docs/`
 - Teste sempre com `--dry-run` antes de emitir de verdade
+- Use `python nfse.py init` para criar o arquivo interativamente com validações
+- O arquivo `.example` contém explicações detalhadas de TODOS os campos disponíveis
+- Use `--descricao` na linha de comando para sobrescrever a descrição sem alterar o arquivo JSON
+- Use o comando `python nfse.py importar <chave_acesso>` para extrair dados de uma nota existente

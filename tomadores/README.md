@@ -103,3 +103,6 @@ Gera o XML:
 - Remova as chaves `_comentario*` se quiser arquivos mais limpos
 - Valide o CNPJ/CPF antes de usar (o sistema valida o dígito verificador)
 - Inclua o endereço sempre que possível para evitar problemas com regras de incidência
+- O arquivo `.example` contém explicações detalhadas de TODOS os campos disponíveis
+- Campos opcionais como telefone, complemento e endereço no exterior podem ser adicionados consultando o `.example`
+- Use o comando `python nfse.py importar <chave_acesso>` para extrair dados de uma nota existente
