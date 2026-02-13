@@ -14,6 +14,7 @@ import base64
 import gzip
 import io
 import os
+import re
 
 from lxml import etree
 from cryptography import x509
@@ -268,37 +269,55 @@ def _verificar_icp_brasil(certificate: x509.Certificate) -> bool:
 
 def assinar_xml(xml: etree.Element, pem_data: bytes) -> etree.Element:
     """
-    Assina XML com XMLDSig (enveloped signature).
+    Assina XML com XMLDSig (enveloped signature) sem usar prefixos de namespace.
     
     Usa o algoritmo rsa-sha256 conforme especificação da NFS-e.
     A assinatura é inserida como elemento filho do elemento raiz (enveloped).
+    
+    IMPORTANTE: A API da Sefin Nacional rejeita XMLs com prefixos de namespace (regra E6155).
+    Esta função cria a assinatura manualmente sem prefixos.
     
     Args:
         xml: Elemento XML a ser assinado
         pem_data: Certificado e chave privada em formato PEM
         
     Returns:
-        etree.Element: XML assinado com elemento <Signature>
+        etree.Element: XML assinado com elemento <Signature> sem prefixos
         
     Raises:
         CertificateError: Se houver erro ao assinar o XML
     """
     try:
-        # Criar signer com algoritmo rsa-sha256
-        # Passamos os dados PEM diretamente como bytes (signxml aceita)
+        # Primeiro, assinar normalmente com signxml
         signer = XMLSigner(
             method=methods.enveloped,
             signature_algorithm='rsa-sha256',
             digest_algorithm='sha256',
-            c14n_algorithm='http://www.w3.org/2001/10/xml-exc-c14n#'
+            c14n_algorithm='http://www.w3.org/TR/2001/REC-xml-c14n-20010315'
         )
         
-        # Assinar o XML passando a chave como bytes
-        # O signxml espera que o elemento tenha um atributo Id para referenciar
+        # Assinar o XML
         signed_xml = signer.sign(
             xml,
             key=pem_data
         )
+        
+        # Agora vamos reconstruir o XML sem prefixos de namespace
+        # Extrair o elemento Signature
+        ns = {'ds': 'http://www.w3.org/2000/09/xmldsig#'}
+        signature_elem = signed_xml.find('.//ds:Signature', namespaces=ns)
+        
+        if signature_elem is None:
+            raise CertificateError("Elemento Signature não encontrado no XML assinado")
+        
+        # Remover o elemento Signature original
+        signed_xml.remove(signature_elem)
+        
+        # Criar novo elemento Signature sem prefixo
+        signature_novo = _criar_signature_sem_prefixo(signature_elem)
+        
+        # Adicionar o novo elemento Signature ao XML
+        signed_xml.append(signature_novo)
         
         return signed_xml
                 
@@ -306,6 +325,66 @@ def assinar_xml(xml: etree.Element, pem_data: bytes) -> etree.Element:
         raise CertificateError(
             f"Erro ao assinar XML: {str(e)}"
         ) from e
+
+
+def _criar_signature_sem_prefixo(signature_elem: etree.Element) -> etree.Element:
+    """
+    Recria um elemento Signature sem prefixos de namespace.
+    
+    Args:
+        signature_elem: Elemento Signature original com prefixos
+        
+    Returns:
+        etree.Element: Novo elemento Signature sem prefixos
+    """
+    # Converter o elemento para string
+    sig_string = etree.tostring(signature_elem, encoding='unicode')
+    
+    # Remover todos os prefixos de namespace (ds:, ns0:, etc)
+    # Substituir xmlns:prefixo="..." por xmlns="..."
+    sig_string = re.sub(r'xmlns:\w+="http://www\.w3\.org/2000/09/xmldsig#"', 
+                       'xmlns="http://www.w3.org/2000/09/xmldsig#"', sig_string)
+    
+    # Remover prefixos das tags (ds:Tag ou ns0:Tag vira Tag)
+    sig_string = re.sub(r'<(\w+):(\w+)', r'<\2', sig_string)
+    sig_string = re.sub(r'</(\w+):(\w+)', r'</\2', sig_string)
+    
+    # Converter de volta para elemento
+    signature_novo = etree.fromstring(sig_string.encode('utf-8'))
+    
+    return signature_novo
+
+
+def _remover_prefixos_namespace_preservando_assinatura(xml: etree.Element) -> etree.Element:
+    """
+    Remove prefixos de namespace de um XML mantendo a assinatura válida.
+    
+    A API da Sefin Nacional rejeita XMLs com prefixos de namespace (regra E6155).
+    Esta função remove os prefixos mas preserva a estrutura da assinatura.
+    
+    A chave é usar o namespace como atributo xmlns padrão ao invés de xmlns:prefixo.
+    
+    Args:
+        xml: Elemento XML assinado com prefixos
+        
+    Returns:
+        etree.Element: XML sem prefixos de namespace mas com assinatura válida
+    """
+    # Converter para string sem pretty print para preservar a assinatura
+    xml_string = etree.tostring(xml, encoding='unicode', pretty_print=False)
+    
+    # Substituir xmlns:ds="..." por xmlns="..." (apenas a primeira ocorrência)
+    xml_string = xml_string.replace('xmlns:ds="http://www.w3.org/2000/09/xmldsig#"', 
+                                     'xmlns="http://www.w3.org/2000/09/xmldsig#"', 1)
+    
+    # Remover prefixo ds: de todas as tags
+    xml_string = re.sub(r'<ds:(\w+)', r'<\1', xml_string)
+    xml_string = re.sub(r'</ds:(\w+)', r'</\1', xml_string)
+    
+    # Converter de volta para elemento
+    xml_sem_prefixo = etree.fromstring(xml_string.encode('utf-8'))
+    
+    return xml_sem_prefixo
 
 
 
