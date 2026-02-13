@@ -83,7 +83,7 @@ Todos os arquivos de exemplo incluem comentários explicativos usando chaves que
 
 **Importante:** As chaves `_comentario*` são ignoradas pelo sistema e podem ser removidas se você preferir arquivos mais limpos.
 
-### 🚀 Comandos Principais
+### 🚀 Comandos Disponíveis
 
 #### Inicializar
 ```bash
@@ -535,10 +535,10 @@ python nfse.py emitir --valor 1500.00 --data 2026-03-15T14:30:00-03:00 --dry-run
 ### 2. Use os arquivos .example como base
 Copie e adapte os arquivos de exemplo:
 ```bash
-copy prestadores/prestador.json.example prestadores/prestador.json
-copy tomadores/tomador.json.example tomadores/tomador.json
-copy servicos/servico.json.example servicos/servico.json
-copy config.json.example config.json
+cp prestadores/prestador.json.example prestadores/prestador.json
+cp tomadores/tomador.json.example tomadores/tomador.json
+cp servicos/servico.json.example servicos/servico.json
+cp config.json.example config.json
 ```
 
 ### 3. Organize em subdiretórios
@@ -552,7 +552,7 @@ prestadores/
 ```
 
 ### 4. Configure defaults no config.json
-Copie `config.json.example` para `config.json` e configure defaults para evitar especificar `--prestador`, `--tomador` e `--servico` toda vez:
+Copie `config.json.example` para `config.json` e configure defaults para evitar especificar `--prestador`, `--tomador` e `--servico` toda vez, se preferir:
 ```json
 {
   "defaults": {
@@ -563,7 +563,7 @@ Copie `config.json.example` para `config.json` e configure defaults para evitar 
 }
 ```
 
-### 5. Remova comentários se preferir
+### 5. Remova comentários, se preferir
 As chaves `_comentario*` podem ser removidas para arquivos mais limpos:
 ```bash
 # Antes
