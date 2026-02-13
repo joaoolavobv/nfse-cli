@@ -17,7 +17,10 @@ import os
 import tempfile
 
 from lxml import etree
-from OpenSSL import crypto
+from cryptography import x509
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.serialization import pkcs12
+from cryptography.hazmat.backends import default_backend
 from signxml import XMLSigner, methods
 
 
@@ -75,22 +78,28 @@ def carregar_pfx(arquivo_pfx: str, senha: str) -> bytes:
         with open(arquivo_pfx, 'rb') as f:
             pfx_data = f.read()
         
-        # Carregar PFX com pyOpenSSL
+        # Carregar PFX com cryptography
         try:
-            p12 = crypto.load_pkcs12(pfx_data, senha.encode('utf-8'))
-        except crypto.Error as e:
+            private_key, certificate, additional_certs = pkcs12.load_key_and_certificates(
+                pfx_data,
+                senha.encode('utf-8'),
+                backend=default_backend()
+            )
+        except ValueError as e:
             # Erro comum: senha incorreta
             raise CertificateError(
                 "Senha do certificado incorreta ou arquivo PFX inválido"
             ) from e
         
-        # Extrair certificado e chave privada
-        cert = p12.get_certificate()
-        private_key = p12.get_privatekey()
+        # Converter chave privada para PEM
+        key_pem = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.NoEncryption()
+        )
         
-        # Converter para formato PEM
-        cert_pem = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-        key_pem = crypto.dump_privatekey(crypto.FILETYPE_PEM, private_key)
+        # Converter certificado para PEM
+        cert_pem = certificate.public_bytes(serialization.Encoding.PEM)
         
         # Concatenar certificado e chave (formato esperado por signxml)
         pem_data = key_pem + cert_pem
@@ -135,37 +144,36 @@ def validar_certificado(arquivo_pfx: str, senha: str) -> CertificadoInfo:
         with open(arquivo_pfx, 'rb') as f:
             pfx_data = f.read()
         
-        # Carregar PFX
+        # Carregar PFX com cryptography
         try:
-            p12 = crypto.load_pkcs12(pfx_data, senha.encode('utf-8'))
-        except crypto.Error as e:
+            private_key, certificate, additional_certs = pkcs12.load_key_and_certificates(
+                pfx_data,
+                senha.encode('utf-8'),
+                backend=default_backend()
+            )
+        except ValueError as e:
             raise CertificateError(
                 "Senha do certificado incorreta ou arquivo PFX inválido"
             ) from e
         
-        cert = p12.get_certificate()
-        
         # Extrair informações do certificado
-        subject = cert.get_subject()
-        issuer = cert.get_issuer()
+        subject = certificate.subject
+        issuer = certificate.issuer
         
         # Nome do titular (CN = Common Name)
-        titular = subject.CN if hasattr(subject, 'CN') else "Desconhecido"
+        titular_attrs = subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)
+        titular = titular_attrs[0].value if titular_attrs else "Desconhecido"
         
         # Nome do emissor
-        emissor = issuer.CN if hasattr(issuer, 'CN') else "Desconhecido"
+        emissor_attrs = issuer.get_attributes_for_oid(x509.NameOID.COMMON_NAME)
+        emissor = emissor_attrs[0].value if emissor_attrs else "Desconhecido"
         
         # Datas de validade
-        # notBefore e notAfter estão em formato bytes: YYYYMMDDHHMMSSZ
-        not_before_str = cert.get_notBefore().decode('utf-8')
-        not_after_str = cert.get_notAfter().decode('utf-8')
-        
-        # Converter para datetime
-        validade_inicio = datetime.strptime(not_before_str, '%Y%m%d%H%M%SZ')
-        validade_fim = datetime.strptime(not_after_str, '%Y%m%d%H%M%SZ')
+        validade_inicio = certificate.not_valid_before_utc
+        validade_fim = certificate.not_valid_after_utc
         
         # Calcular dias para expirar
-        agora = datetime.utcnow()
+        agora = datetime.now(validade_fim.tzinfo)
         dias_para_expirar = (validade_fim - agora).days
         
         # Verificar se certificado está expirado
@@ -176,8 +184,7 @@ def validar_certificado(arquivo_pfx: str, senha: str) -> CertificadoInfo:
             )
         
         # Verificar se é ICP-Brasil
-        # ICP-Brasil: verificar se a cadeia de certificação contém "AC Raiz" ou "ICP-Brasil"
-        eh_icp_brasil = _verificar_icp_brasil(cert, issuer)
+        eh_icp_brasil = _verificar_icp_brasil(certificate)
         
         if not eh_icp_brasil:
             raise CertificateError(
@@ -206,7 +213,7 @@ def validar_certificado(arquivo_pfx: str, senha: str) -> CertificadoInfo:
         ) from e
 
 
-def _verificar_icp_brasil(cert, issuer) -> bool:
+def _verificar_icp_brasil(certificate: x509.Certificate) -> bool:
     """
     Verifica se o certificado é emitido pela ICP-Brasil.
     
@@ -214,20 +221,24 @@ def _verificar_icp_brasil(cert, issuer) -> bool:
     da ICP-Brasil no emissor.
     
     Args:
-        cert: Certificado X509
-        issuer: Emissor do certificado
+        certificate: Certificado X509 da biblioteca cryptography
         
     Returns:
         bool: True se for ICP-Brasil, False caso contrário
     """
-    # Verificar no Common Name do emissor
-    emissor_cn = issuer.CN if hasattr(issuer, 'CN') else ""
+    issuer = certificate.issuer
     
-    # Verificar no Organization do emissor
-    emissor_o = issuer.O if hasattr(issuer, 'O') else ""
+    # Extrair Common Name do emissor
+    cn_attrs = issuer.get_attributes_for_oid(x509.NameOID.COMMON_NAME)
+    emissor_cn = cn_attrs[0].value if cn_attrs else ""
     
-    # Verificar no Organizational Unit do emissor
-    emissor_ou = issuer.OU if hasattr(issuer, 'OU') else ""
+    # Extrair Organization do emissor
+    o_attrs = issuer.get_attributes_for_oid(x509.NameOID.ORGANIZATION_NAME)
+    emissor_o = o_attrs[0].value if o_attrs else ""
+    
+    # Extrair Organizational Unit do emissor
+    ou_attrs = issuer.get_attributes_for_oid(x509.NameOID.ORGANIZATIONAL_UNIT_NAME)
+    emissor_ou = ou_attrs[0].value if ou_attrs else ""
     
     # Indicadores de ICP-Brasil
     indicadores_icp = [

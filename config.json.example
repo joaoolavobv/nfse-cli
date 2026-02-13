@@ -2,10 +2,6 @@
   "_comentario": "Arquivo de configuração principal do nfse-cli",
   "_comentario_uso": "Este arquivo controla o comportamento geral do sistema",
   
-  "ambiente": "producaorestrita",
-  "_comentario_ambiente": "Ambiente da API: 'producao' ou 'producaorestrita' (homologação)",
-  "_comentario_ambiente_dica": "Use 'producaorestrita' para testes. Mude para 'producao' apenas quando estiver pronto",
-  
   "dry_run": true,
   "_comentario_dry_run": "Modo de simulação: true = não envia para API (apenas testa), false = envia de verdade",
   "_comentario_dry_run_dica": "Mantenha true até ter certeza que tudo está correto",
@@ -33,7 +29,12 @@
   "_comentario_versao_aplicativo": "Versão do aplicativo. Corresponde à tag XML <verAplic>",
   
   "defaults": {
-    "_comentario_defaults": "Caminhos padrão para arquivos JSON (evita ter que especificar --prestador, --tomador, --servico toda vez)",
+    "_comentario_defaults": "Caminhos padrão para arquivos JSON e configurações (evita ter que especificar na linha de comando toda vez)",
+    
+    "ambiente": "producaorestrita",
+    "_comentario_ambiente": "Ambiente padrão da API: 'producao' ou 'producaorestrita' (homologação)",
+    "_comentario_ambiente_dica": "Use 'producaorestrita' para testes. Mude para 'producao' apenas quando estiver pronto",
+    "_comentario_ambiente_override": "Pode ser sobrescrito com --ambiente ou --producao na linha de comando",
     
     "prestador": "prestadores/prestador_12345678000195.json",
     "_comentario_prestador": "Caminho padrão para o arquivo JSON do prestador",

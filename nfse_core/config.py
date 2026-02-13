@@ -67,8 +67,10 @@ class Config:
             
             # Criar instância com valores do arquivo
             # Usar valores padrão para campos não presentes no arquivo
+            defaults = dados.get('defaults', {})
+            
             return cls(
-                ambiente=dados.get('ambiente', 'producaorestrita'),
+                ambiente=defaults.get('ambiente', 'producaorestrita'),
                 dry_run=dados.get('dry_run', True),
                 urls=dados.get('urls', {
                     "producao": "https://adn.nfse.gov.br",
@@ -79,7 +81,7 @@ class Config:
                 serie=dados.get('serie', 1),
                 proximo_numero=dados.get('proximo_numero', 1),
                 versao_aplicativo=dados.get('versao_aplicativo', 'nfse-cli-2.0.0'),
-                defaults=dados.get('defaults', {})
+                defaults=defaults
             )
         except json.JSONDecodeError as e:
             raise ValueError(f"Erro ao ler arquivo de configuração {caminho}: {e}")

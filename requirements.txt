@@ -8,7 +8,6 @@ signxml>=3.2.0
 
 # Criptografia e certificados
 cryptography>=41.0.0
-pyOpenSSL>=23.2.0
 
 # Requisições HTTP
 requests>=2.31.0

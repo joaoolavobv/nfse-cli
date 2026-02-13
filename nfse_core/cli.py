@@ -107,6 +107,8 @@ def criar_parser() -> ArgumentParserPtBr:
     Argumentos globais:
         --verbose, -v: Exibe informações detalhadas de debug
         --silent, -s: Suprime mensagens informativas (apenas erros críticos)
+        --ambiente: Define o ambiente da API (producao ou producaorestrita)
+        --producao: Atalho para --ambiente producao
     
     Comandos disponíveis:
         init: Inicializa estrutura de diretórios e configuração
@@ -126,8 +128,8 @@ Exemplos de uso:
   nfse init                                      # Inicializar estrutura
   nfse emitir --valor 1500.00 --data 2024-01-15  # Emitir nota (ponto)
   nfse emitir --valor 1500,00 --data 15/01/2024 --dry-run  # Simular emissão (vírgula)
-  nfse danfse <chave_acesso>                     # Baixar DANFSe
-  nfse importar <chave_acesso>                   # Importar dados de NFS-e
+  nfse --producao danfse <chave_acesso>          # Baixar DANFSe em produção
+  nfse --ambiente producaorestrita importar <chave_acesso>  # Importar em produção restrita
 
 Para mais informações sobre cada comando, use:
   nfse <comando> --help
@@ -145,6 +147,18 @@ Para mais informações sobre cada comando, use:
         '--silent', '-s',
         action='store_true',
         help='Suprime mensagens informativas, exibindo apenas erros críticos'
+    )
+    
+    parser.add_argument(
+        '--ambiente',
+        choices=['producao', 'producaorestrita'],
+        help='Define o ambiente da API (sobrescreve config.json)'
+    )
+    
+    parser.add_argument(
+        '--producao',
+        action='store_true',
+        help='Atalho para --ambiente producao'
     )
     
     # Criar subparsers para comandos
@@ -390,6 +404,38 @@ def configurar_output(args):
     else:
         VERBOSE = False
         SILENT = False
+
+
+def processar_ambiente(args, config):
+    """
+    Processa o argumento de ambiente e sobrescreve a configuração se necessário.
+    
+    Regras:
+        - Se --producao é fornecido, usa ambiente 'producao'
+        - Se --ambiente é fornecido, usa o valor especificado
+        - --producao tem precedência sobre --ambiente
+        - Se nenhum for fornecido, usa o valor do config.json
+    
+    Args:
+        args: Namespace com argumentos parseados
+        config: Objeto Config carregado
+    
+    Returns:
+        Config: Objeto Config com ambiente atualizado (se necessário)
+    """
+    # Determinar ambiente a usar
+    if hasattr(args, 'producao') and args.producao:
+        # --producao tem precedência
+        config.ambiente = 'producao'
+        if VERBOSE:
+            print(f"🔧 Ambiente sobrescrito via --producao: producao")
+    elif hasattr(args, 'ambiente') and args.ambiente:
+        # --ambiente especificado
+        config.ambiente = args.ambiente
+        if VERBOSE:
+            print(f"🔧 Ambiente sobrescrito via --ambiente: {args.ambiente}")
+    
+    return config
 
 
 def main(argv: Optional[list] = None):
@@ -805,13 +851,14 @@ def executar_emitir(args):
         
         try:
             config = Config.carregar()
+            # Processar ambiente da linha de comando
+            config = processar_ambiente(args, config)
         except Exception as e:
             print(f"❌ Erro ao carregar configuração: {e}")
             return 4
         
-        # Aplicar overrides de ambiente e dry_run se fornecidos via CLI
-        if args.ambiente:
-            config.ambiente = args.ambiente
+        # Aplicar override de dry_run se fornecido via CLI
+        if args.dry_run:
             if not SILENT:
                 print(f"   Ambiente sobrescrito via CLI: {config.ambiente}")
         
@@ -1268,6 +1315,8 @@ def executar_danfse(args):
         
         try:
             config = Config.carregar()
+            # Processar ambiente da linha de comando
+            config = processar_ambiente(args, config)
         except Exception as e:
             print(f"❌ Erro ao carregar configuração: {e}")
             return 4
@@ -1508,6 +1557,8 @@ def executar_importar(args):
         
         try:
             config = Config.carregar()
+            # Processar ambiente da linha de comando
+            config = processar_ambiente(args, config)
         except Exception as e:
             print(f"❌ Erro ao carregar configuração: {e}")
             return 4

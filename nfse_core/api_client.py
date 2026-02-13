@@ -250,6 +250,13 @@ class APIClient:
         url_base = self.config.obter_url_api()
         url = f"{url_base}/nfse/{chave_acesso}"
         
+        # Debug: exibir URL completa se VERBOSE estiver ativo
+        from .cli import VERBOSE
+        if VERBOSE:
+            print(f"🔍 DEBUG: URL da requisição: {url}")
+            print(f"🔍 DEBUG: Chave de acesso: {chave_acesso}")
+            print(f"🔍 DEBUG: Certificado: {self.temp_cert_file.name}")
+        
         try:
             # Fazer requisição GET com autenticação mTLS
             response = requests.get(
@@ -257,6 +264,12 @@ class APIClient:
                 cert=self.temp_cert_file.name,
                 timeout=30
             )
+            
+            # Debug: exibir detalhes da resposta
+            if VERBOSE:
+                print(f"🔍 DEBUG: Status code: {response.status_code}")
+                print(f"🔍 DEBUG: Headers: {dict(response.headers)}")
+                print(f"🔍 DEBUG: Response body (primeiros 500 chars): {response.text[:500]}")
             
             # Processar resposta
             if response.status_code == 200:
@@ -341,6 +354,13 @@ class APIClient:
         url_base = self.config.obter_url_api()
         url = f"{url_base}/danfse/{chave_acesso}"
         
+        # Debug: exibir URL completa se VERBOSE estiver ativo
+        from .cli import VERBOSE
+        if VERBOSE:
+            print(f"🔍 DEBUG: URL da requisição: {url}")
+            print(f"🔍 DEBUG: Chave de acesso: {chave_acesso}")
+            print(f"🔍 DEBUG: Certificado: {self.temp_cert_file.name}")
+        
         try:
             # Fazer requisição GET com autenticação mTLS
             response = requests.get(
@@ -348,6 +368,12 @@ class APIClient:
                 cert=self.temp_cert_file.name,
                 timeout=30
             )
+            
+            # Debug: exibir detalhes da resposta
+            if VERBOSE:
+                print(f"🔍 DEBUG: Status code: {response.status_code}")
+                print(f"🔍 DEBUG: Headers: {dict(response.headers)}")
+                print(f"🔍 DEBUG: Response body (primeiros 500 chars): {response.text[:500]}")
             
             # Verificar se a requisição foi bem-sucedida
             if response.status_code == 200:

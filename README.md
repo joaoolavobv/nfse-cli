@@ -415,6 +415,58 @@ python nfse.py init
 
 ---
 
+## 🎛️ Opções Globais
+
+Estas opções podem ser usadas com qualquer comando e devem vir ANTES do nome do comando:
+
+### Controle de Ambiente
+
+```bash
+# Usar ambiente de produção
+python nfse.py --producao <comando>
+
+# Especificar ambiente explicitamente
+python nfse.py --ambiente producao <comando>
+python nfse.py --ambiente producaorestrita <comando>
+```
+
+**Observações:**
+- `--producao` é um atalho para `--ambiente producao`
+- Sobrescreve o ambiente configurado em `config.json`
+- Padrão: usa o ambiente definido em `config.json` (defaults.ambiente)
+
+### Controle de Verbosidade
+
+```bash
+# Modo verbose (exibe detalhes técnicos)
+python nfse.py -v <comando>
+python nfse.py --verbose <comando>
+
+# Modo silencioso (apenas erros críticos)
+python nfse.py -s <comando>
+python nfse.py --silent <comando>
+```
+
+**Observações:**
+- `--verbose` tem precedência sobre `--silent`
+- Modo verbose exibe: XML gerado, payloads, URLs de requisição, headers HTTP
+- Útil para debug e troubleshooting
+
+### Exemplos Combinados
+
+```bash
+# Baixar DANFSe em produção com debug
+python nfse.py --producao -v danfse <chave_acesso>
+
+# Emitir nota em produção restrita sem mensagens
+python nfse.py --ambiente producaorestrita -s emitir --valor 1500.00 --data 2026-03-15
+
+# Consultar NFS-e em produção
+python nfse.py --producao importar <chave_acesso>
+```
+
+---
+
 ## 📖 Uso Detalhado
 
 ### Comando: init
@@ -437,16 +489,13 @@ Emite uma NFS-e com os dados fornecidos.
 
 **Parâmetros obrigatórios:**
 - `--valor`: Valor monetário do serviço. Aceita vírgula ou ponto como separador decimal (ex: 1500.00 ou 1500,00)
-- `--data`: Data/hora de emissão no formato ISO 8601 (ex: 2026-03-15T14:30:00-03:00)
+- `--data`: Data/hora de emissão no formato YYYY-MM-DD (ex: 2026-03-15). Também aceita formato DD/MM/YYYY (ex: 15/03/2026)
 
 **Parâmetros opcionais:**
-- `--ambiente`: Ambiente da API (producao ou producaorestrita)
 - `--dry-run`: Modo de simulação (não envia para API)
 - `--prestador`: Caminho do arquivo JSON do prestador
 - `--tomador`: Caminho do arquivo JSON do tomador
 - `--servico`: Caminho do arquivo JSON do serviço
-- `--verbose` ou `-v`: Exibe detalhes técnicos (XML, payload, etc.)
-- `--silent` ou `-s`: Modo silencioso (apenas erros críticos)
 
 **Exemplos:**
 
