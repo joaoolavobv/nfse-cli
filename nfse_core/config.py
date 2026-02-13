@@ -17,20 +17,14 @@ class Config:
     Configuração da aplicação nfse-cli.
     
     Attributes:
-        ambiente: Ambiente de execução ('producao' ou 'producaorestrita')
-        dry_run: Modo de simulação (não envia para API se True)
-        timeout: Timeout em segundos para requisições HTTP (padrão: 30)
         urls: Dicionário com URLs da API por ambiente
         arquivo_cert_pfx: Caminho para o arquivo de certificado PFX
         arquivo_cert_senha: Caminho para o arquivo com a senha do certificado
         serie: Série do DPS
         proximo_numero: Próximo número de DPS a ser usado
         versao_aplicativo: Versão do aplicativo para incluir no XML
-        defaults: Dicionário com caminhos padrão para prestador, tomador e serviços
+        defaults: Dicionário com valores padrão (ambiente, dry_run, timeout, prestador, tomador, servicos)
     """
-    ambiente: str = "producaorestrita"
-    dry_run: bool = True
-    timeout: int = 30
     urls: Dict[str, str] = field(default_factory=lambda: {
         "producao": "https://adn.nfse.gov.br",
         "producaorestrita": "https://adn.producaorestrita.nfse.gov.br"
@@ -40,7 +34,42 @@ class Config:
     serie: int = 1
     proximo_numero: int = 1
     versao_aplicativo: str = "nfse-cli-2.0.0"
-    defaults: Dict[str, str] = field(default_factory=dict)
+    defaults: Dict[str, str] = field(default_factory=lambda: {
+        "ambiente": "producaorestrita",
+        "dry_run": True,
+        "timeout": 30
+    })
+    
+    # Propriedades de conveniência para acessar valores de defaults
+    @property
+    def ambiente(self) -> str:
+        """Retorna o ambiente configurado em defaults."""
+        return self.defaults.get('ambiente', 'producaorestrita')
+    
+    @ambiente.setter
+    def ambiente(self, valor: str):
+        """Define o ambiente em defaults."""
+        self.defaults['ambiente'] = valor
+    
+    @property
+    def dry_run(self) -> bool:
+        """Retorna o modo dry_run configurado em defaults."""
+        return self.defaults.get('dry_run', True)
+    
+    @dry_run.setter
+    def dry_run(self, valor: bool):
+        """Define o modo dry_run em defaults."""
+        self.defaults['dry_run'] = valor
+    
+    @property
+    def timeout(self) -> int:
+        """Retorna o timeout configurado em defaults."""
+        return self.defaults.get('timeout', 30)
+    
+    @timeout.setter
+    def timeout(self, valor: int):
+        """Define o timeout em defaults."""
+        self.defaults['timeout'] = valor
 
     @classmethod
     def carregar(cls, caminho: str = 'config.json') -> 'Config':
@@ -69,12 +98,13 @@ class Config:
             
             # Criar instância com valores do arquivo
             # Usar valores padrão para campos não presentes no arquivo
-            defaults = dados.get('defaults', {})
+            defaults = dados.get('defaults', {
+                "ambiente": "producaorestrita",
+                "dry_run": True,
+                "timeout": 30
+            })
             
             return cls(
-                ambiente=defaults.get('ambiente', 'producaorestrita'),
-                dry_run=defaults.get('dry_run', True),
-                timeout=defaults.get('timeout', 30),
                 urls=dados.get('urls', {
                     "producao": "https://adn.nfse.gov.br",
                     "producaorestrita": "https://adn.producaorestrita.nfse.gov.br"

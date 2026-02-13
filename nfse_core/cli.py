@@ -119,10 +119,46 @@ def criar_parser() -> ArgumentParserPtBr:
     Returns:
         ArgumentParserPtBr configurado
     """
+    # Criar parser para argumentos globais (que serão herdados pelos subparsers)
+    parser_global = ArgumentParserPtBr(add_help=False)
+    
+    parser_global.add_argument(
+        '--verbose', '-v',
+        action='store_true',
+        help='Exibe informações detalhadas de debug (tem precedência sobre --silent)'
+    )
+    
+    parser_global.add_argument(
+        '--silent', '-s',
+        action='store_true',
+        help='Suprime mensagens informativas, exibindo apenas erros críticos'
+    )
+    
+    parser_global.add_argument(
+        '--ambiente',
+        choices=['producao', 'producaorestrita'],
+        help='Define o ambiente da API (sobrescreve config.json)'
+    )
+    
+    parser_global.add_argument(
+        '--producao',
+        action='store_true',
+        help='Atalho para --ambiente producao'
+    )
+    
+    parser_global.add_argument(
+        '--timeout', '-t',
+        type=int,
+        metavar='SEGUNDOS',
+        help='Timeout em segundos para requisições HTTP (sobrescreve config.json)'
+    )
+    
+    # Criar parser principal
     parser = ArgumentParserPtBr(
         prog='nfse',
         description='Ferramenta de linha de comando para emissão de NFS-e do Governo Federal',
         formatter_class=argparse.RawDescriptionHelpFormatter,
+        parents=[parser_global],
         epilog="""
 Exemplos de uso:
   nfse init                                      # Inicializar estrutura
@@ -135,38 +171,6 @@ Exemplos de uso:
 Para mais informações sobre cada comando, use:
   nfse <comando> --help
         """
-    )
-    
-    # Argumentos globais
-    parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Exibe informações detalhadas de debug (tem precedência sobre --silent)'
-    )
-    
-    parser.add_argument(
-        '--silent', '-s',
-        action='store_true',
-        help='Suprime mensagens informativas, exibindo apenas erros críticos'
-    )
-    
-    parser.add_argument(
-        '--ambiente',
-        choices=['producao', 'producaorestrita'],
-        help='Define o ambiente da API (sobrescreve config.json)'
-    )
-    
-    parser.add_argument(
-        '--producao',
-        action='store_true',
-        help='Atalho para --ambiente producao'
-    )
-    
-    parser.add_argument(
-        '--timeout', '-t',
-        type=int,
-        metavar='SEGUNDOS',
-        help='Timeout em segundos para requisições HTTP (sobrescreve config.json)'
     )
     
     # Criar subparsers para comandos
@@ -346,14 +350,6 @@ Em modo dry-run, todas as etapas são executadas exceto o envio real para a API.
     
     # Parâmetros opcionais
     parser_emitir.add_argument(
-        '--ambiente',
-        type=str,
-        choices=['producao', 'producaorestrita'],
-        help='Ambiente da API. Sobrescreve o valor do config.json para esta execução. '
-             'Valores: producao, producaorestrita'
-    )
-    
-    parser_emitir.add_argument(
         '--dry-run',
         dest='dry_run',
         action='store_true',
@@ -500,6 +496,9 @@ def processar_ambiente(args, config):
         config.ambiente = args.ambiente
         if VERBOSE:
             print(f"🔧 Ambiente sobrescrito via --ambiente: {args.ambiente}")
+    else:
+        if VERBOSE:
+            print(f"🔧 Usando ambiente do config.json: {config.ambiente}")
     
     # Processar timeout se fornecido
     if hasattr(args, 'timeout') and args.timeout:

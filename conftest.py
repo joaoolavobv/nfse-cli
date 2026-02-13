@@ -4,9 +4,19 @@ Configuração do pytest e fixtures básicas para testes do nfse-cli
 
 import warnings
 import pytest
+import sys
 from hypothesis import settings, Verbosity
 from datetime import datetime
 from typing import Dict
+
+# Configurar encoding UTF-8 para stdout/stderr no Windows
+# Isso evita erros de encoding com emojis e caracteres especiais
+if sys.platform == 'win32':
+    import codecs
+    if hasattr(sys.stdout, 'buffer'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    if hasattr(sys.stderr, 'buffer'):
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 # Suprimir warnings de deprecação do signxml relacionados a algoritmos SECT
 # que serão removidos em versões futuras do cryptography.
@@ -31,8 +41,6 @@ settings.load_profile("default")
 def config_exemplo() -> Dict:
     """Fixture com configuração de exemplo para testes"""
     return {
-        "ambiente": "producaorestrita",
-        "dry_run": True,
         "urls": {
             "producao": "https://adn.nfse.gov.br",
             "producaorestrita": "https://adn.producaorestrita.nfse.gov.br"
@@ -43,6 +51,9 @@ def config_exemplo() -> Dict:
         "proximo_numero": 1,
         "versao_aplicativo": "nfse-cli-2.0.0",
         "defaults": {
+            "ambiente": "producaorestrita",
+            "dry_run": True,
+            "timeout": 30,
             "prestador": "prestadores/prestador_12345678000190.json",
             "tomador": "tomadores/tomador_exemplo.json",
             "servicos": "servicos/servico_010101.json"

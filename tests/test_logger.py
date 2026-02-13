@@ -100,8 +100,11 @@ def test_criar_log_emissao():
     """Testa criação de log completo a partir dos dados da operação"""
     # Criar objetos de teste
     config = Config(
-        ambiente="producaorestrita",
-        dry_run=True
+        defaults={
+            "ambiente": "producaorestrita",
+            "dry_run": True,
+            "timeout": 30
+        }
     )
     
     prestador = Prestador(
@@ -186,8 +189,11 @@ def test_criar_log_emissao():
 def test_criar_log_emissao_sem_dry_run():
     """Testa criação de log em modo de emissão real (não dry-run)"""
     config = Config(
-        ambiente="producao",
-        dry_run=False
+        defaults={
+            "ambiente": "producao",
+            "dry_run": False,
+            "timeout": 30
+        }
     )
     
     prestador = Prestador(
@@ -236,7 +242,13 @@ def test_criar_log_emissao_sem_dry_run():
 
 def test_log_emissao_com_erro_api():
     """Testa criação de log quando há erro na API"""
-    config = Config(ambiente="producaorestrita", dry_run=False)
+    config = Config(
+        defaults={
+            "ambiente": "producaorestrita",
+            "dry_run": False,
+            "timeout": 30
+        }
+    )
     
     prestador = Prestador(
         CNPJ="12345678000190",

@@ -15,6 +15,58 @@ import requests
 from .config import Config
 
 
+def _obter_mensagem_erro_http(status_code: int, operacao: str = "geral") -> str:
+    """
+    Retorna mensagem de erro descritiva baseada no código HTTP e operação.
+    
+    Args:
+        status_code: Código de status HTTP
+        operacao: Tipo de operação ("emissao", "consulta", "download", "geral")
+    
+    Returns:
+        Mensagem de erro descritiva
+    """
+    if operacao == "emissao":
+        mensagens = {
+            400: "Requisição inválida. Verifique os dados do DPS.",
+            401: "Não autorizado. Verifique se o certificado digital é válido.",
+            403: "Acesso negado. Verifique as permissões do certificado.",
+            404: "Endpoint não encontrado. Verifique se o ambiente está correto e se a API está disponível.",
+            422: "Dados inválidos. Verifique os campos do DPS.",
+            502: "Servidor indisponível (Bad Gateway). O servidor do governo pode estar temporariamente fora do ar.",
+            503: "Serviço indisponível. Tente novamente em alguns minutos.",
+        }
+    elif operacao == "consulta":
+        mensagens = {
+            400: "Requisição inválida. Verifique a chave de acesso.",
+            401: "Não autorizado. Verifique se o certificado digital é válido.",
+            403: "Acesso negado. Verifique as permissões do certificado.",
+            404: "NFS-e não encontrada. Verifique se a chave de acesso está correta e se a nota existe no ambiente selecionado.",
+            502: "Servidor indisponível (Bad Gateway). O servidor do governo pode estar temporariamente fora do ar.",
+            503: "Serviço indisponível. Tente novamente em alguns minutos.",
+        }
+    elif operacao == "download":
+        mensagens = {
+            400: "Requisição inválida. Verifique a chave de acesso.",
+            401: "Não autorizado. Verifique se o certificado digital é válido.",
+            403: "Acesso negado. Verifique as permissões do certificado.",
+            404: "DANFSe não encontrado. Verifique se a chave de acesso está correta e se a nota existe no ambiente selecionado.",
+            502: "Servidor indisponível (Bad Gateway). O servidor do governo pode estar temporariamente fora do ar.",
+            503: "Serviço indisponível. Tente novamente em alguns minutos.",
+        }
+    else:
+        mensagens = {
+            400: "Requisição inválida.",
+            401: "Não autorizado.",
+            403: "Acesso negado.",
+            404: "Recurso não encontrado.",
+            502: "Servidor indisponível (Bad Gateway).",
+            503: "Serviço indisponível.",
+        }
+    
+    return mensagens.get(status_code, f"Servidor retornou status {status_code} sem mensagem de erro.")
+
+
 @dataclass
 class RespostaAPI:
     """
@@ -176,7 +228,7 @@ class APIClient:
                     erro=None
                 )
             else:
-                # Erro da API
+                # Erro da API (emissão)
                 try:
                     dados_erro = response.json()
                     mensagem_erro = dados_erro.get('mensagem', response.text)
@@ -185,15 +237,7 @@ class APIClient:
                 
                 # Se mensagem está vazia, criar mensagem mais descritiva
                 if not mensagem_erro or mensagem_erro.strip() == '':
-                    if response.status_code == 404:
-                        mensagem_erro = "NFS-e não encontrada. Verifique se a chave de acesso está correta e se a nota existe no ambiente selecionado."
-                    elif response.status_code == 502:
-                        mensagem_erro = "Servidor indisponível (Bad Gateway). O servidor do governo pode estar temporariamente fora do ar."
-                    elif response.status_code == 503:
-                        mensagem_erro = "Serviço indisponível. Tente novamente em alguns minutos."
-                    else:
-                        mensagem_erro = f"Servidor retornou status {response.status_code} sem mensagem de erro."
-                
+                    mensagem_erro = _obter_mensagem_erro_http(response.status_code, 'emissao')
                 return RespostaAPI(
                     sucesso=False,
                     status_code=response.status_code,
@@ -303,7 +347,7 @@ class APIClient:
                     erro=None
                 )
             else:
-                # Erro da API
+                # Erro da API (consulta)
                 try:
                     dados_erro = response.json()
                     mensagem_erro = dados_erro.get('mensagem', response.text)
@@ -312,15 +356,7 @@ class APIClient:
                 
                 # Se mensagem está vazia, criar mensagem mais descritiva
                 if not mensagem_erro or mensagem_erro.strip() == '':
-                    if response.status_code == 404:
-                        mensagem_erro = "NFS-e não encontrada. Verifique se a chave de acesso está correta e se a nota existe no ambiente selecionado."
-                    elif response.status_code == 502:
-                        mensagem_erro = "Servidor indisponível (Bad Gateway). O servidor do governo pode estar temporariamente fora do ar."
-                    elif response.status_code == 503:
-                        mensagem_erro = "Serviço indisponível. Tente novamente em alguns minutos."
-                    else:
-                        mensagem_erro = f"Servidor retornou status {response.status_code} sem mensagem de erro."
-                
+                    mensagem_erro = _obter_mensagem_erro_http(response.status_code, 'consulta')
                 return RespostaAPI(
                     sucesso=False,
                     status_code=response.status_code,
@@ -430,7 +466,7 @@ class APIClient:
                 
                 return response.content
             else:
-                # Erro da API
+                # Erro da API (download)
                 try:
                     dados_erro = response.json()
                     mensagem_erro = dados_erro.get('mensagem', response.text)
@@ -439,15 +475,7 @@ class APIClient:
                 
                 # Se mensagem está vazia, criar mensagem mais descritiva
                 if not mensagem_erro or mensagem_erro.strip() == '':
-                    if response.status_code == 404:
-                        mensagem_erro = "DANFSe não encontrado. Verifique se a chave de acesso está correta e se a nota existe no ambiente selecionado."
-                    elif response.status_code == 502:
-                        mensagem_erro = "Servidor indisponível (Bad Gateway). O servidor do governo pode estar temporariamente fora do ar."
-                    elif response.status_code == 503:
-                        mensagem_erro = "Serviço indisponível. Tente novamente em alguns minutos."
-                    else:
-                        mensagem_erro = f"Servidor retornou status {response.status_code} sem mensagem de erro."
-                
+                    mensagem_erro = _obter_mensagem_erro_http(response.status_code, 'download')
                 raise requests.exceptions.RequestException(
                     f"Erro HTTP {response.status_code}: {mensagem_erro}"
                 )
@@ -474,3 +502,4 @@ class APIClient:
             raise requests.exceptions.RequestException(
                 f"Erro inesperado ao baixar DANFSe: {str(e)}"
             )
+
